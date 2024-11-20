@@ -7,8 +7,8 @@ import { TenantProvider } from '@/utils/tenant-context';
 import { Toaster } from '@/components/ui/toaster';
 
 const meta = {
-  title: 'Next.js Supabase Boilerplate',
-  description: 'Brought to you by Vercel and Supabase.',
+  title: 'Arches KPI',
+  description: 'Arches KPI Management System',
   cardImage: '/og.png',
   robots: 'follow, index',
   favicon: '/favicon.ico',
@@ -20,7 +20,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: meta.title,
     description: meta.description,
     referrer: 'origin-when-cross-origin',
-    keywords: ['Next.js', 'Supabase', 'Boilerplate'],
+    keywords: ['Arches', 'KPI', 'Resource Allocation'],
     authors: [{ name: 'Vercel', url: 'https://vercel.com/' }],
     creator: 'Vercel',
     publisher: 'Vercel',

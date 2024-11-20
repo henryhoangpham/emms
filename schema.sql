@@ -208,3 +208,27 @@ create index if not exists "Allocations_tenant_id_idx" on public."Allocations" u
 create index if not exists idx_employee_allocation on public."Allocations" using btree (employee_id, start_date, end_date) tablespace pg_default;
 
 create index if not exists idx_project_allocation on public."Allocations" using btree (project_id, start_date, end_date) tablespace pg_default;
+
+create table
+  public."Master_new" (
+    id text null,
+    exlink_expert_id bigint null,
+    recruiter text null,
+    date date null,
+    candidate_expert text null,
+    pjt text null,
+    channel text null,
+    name text null,
+    period_of_enrollment text null,
+    position text null,
+    linkedin text null,
+    fee_for_expert double precision null,
+    fee_from_client double precision null,
+    net_revenue double precision null,
+    proposed_currency text null,
+    duration bigint null,
+    item_id text null,
+    currency_id text null,
+    expert_billing_data text null,
+    expert_billing_currency text null
+  ) tablespace pg_default;

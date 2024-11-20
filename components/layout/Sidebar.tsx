@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from "@/components/ui/button";
-import { Users, Briefcase, X, ChevronLeft, ChevronRight, Calendar, FolderTree, BookOpen } from "lucide-react";
+import { Users, Briefcase, X, ChevronLeft, ChevronRight, Calendar, FolderTree, BookOpen, Database } from "lucide-react";
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Logo } from './Logo';
@@ -113,6 +113,16 @@ export function Sidebar({ onClose }: SidebarProps) {
             >
               <BookOpen className="h-4 w-4" />
               {isExpanded && <span className="ml-2">Knowledge</span>}
+            </Button>
+          </Link>
+          <Link href="/master">
+            <Button 
+              variant={pathname.startsWith('/master') ? "secondary" : "ghost"} 
+              className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
+              title="Master Data"
+            >
+              <Database className="h-4 w-4" />
+              {isExpanded && <span className="ml-2">Master Data</span>}
             </Button>
           </Link>
         </nav>

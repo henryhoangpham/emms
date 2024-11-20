@@ -1,4 +1,4 @@
-# Next.js Supabase Resource Management System
+# Arches KPI Management System
 
 A comprehensive resource management system built with Next.js and Supabase, featuring employee allocation tracking, project management, and skill tracking.
 
@@ -87,7 +87,7 @@ A comprehensive resource management system built with Next.js and Supabase, feat
 
 2. **Clone and Setup**
    ```bash
-   git clone https://github.com/henryfmcom/nextjs.git
+   git clone https://github.com/henryhoangpham/nextjs.git
    cd nextjs
    npm install
    ```

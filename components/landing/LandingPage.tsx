@@ -16,7 +16,7 @@ export default function LandingPage({ user }: { user: User | null }) {
         </div>
         <main className="container mx-auto px-4 py-8">
           <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold mb-4">Welcome to Next.js Supabase Boilerplate</h1>
+            <h1 className="text-4xl font-bold mb-4">Welcome to Arches KPI</h1>
             <p className="text-xl text-muted-foreground">
               A solid foundation for building scalable web applications
             </p>
