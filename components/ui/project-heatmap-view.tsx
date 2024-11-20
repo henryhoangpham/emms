@@ -15,12 +15,12 @@ interface Allocation {
   allocation_percentage: number;
 }
 
-interface HeatmapViewProps {
+interface ProjectHeatmapViewProps {
   allocations: Allocation[];
   weeks?: number;
 }
 
-export function HeatmapView({ allocations, weeks = 24 }: HeatmapViewProps) {
+export function ProjectHeatmapView({ allocations, weeks = 24 }: ProjectHeatmapViewProps) {
   const [startWeekOffset, setStartWeekOffset] = useState(0);
 
   // Generate weeks array for the heatmap
@@ -41,14 +41,14 @@ export function HeatmapView({ allocations, weeks = 24 }: HeatmapViewProps) {
     return result;
   }, [weeks, startWeekOffset]);
 
-  // Calculate workload for each employee per week
-  const employeeWorkload = useMemo(() => {
-    const workload: Record<string, Record<string, number>> = {};
+  // Calculate workload for each project per week
+  const projectWorkload = useMemo(() => {
+    const workload: Record<string, Record<string, { total: number; employees: string[] }>> = {};
 
     allocations.forEach(allocation => {
-      const employeeName = allocation.employee_name;
-      if (!workload[employeeName]) {
-        workload[employeeName] = {};
+      const projectName = allocation.project_name;
+      if (!workload[projectName]) {
+        workload[projectName] = {};
       }
 
       weeksArray.forEach(week => {
@@ -58,8 +58,11 @@ export function HeatmapView({ allocations, weeks = 24 }: HeatmapViewProps) {
 
         // Check if allocation overlaps with this week
         if (allocationStart <= week.end && allocationEnd >= week.start) {
-          workload[employeeName][weekKey] = (workload[employeeName][weekKey] || 0) + 
-            allocation.allocation_percentage;
+          if (!workload[projectName][weekKey]) {
+            workload[projectName][weekKey] = { total: 0, employees: [] };
+          }
+          workload[projectName][weekKey].total += allocation.allocation_percentage;
+          workload[projectName][weekKey].employees.push(allocation.employee_name);
         }
       });
     });
@@ -67,17 +70,17 @@ export function HeatmapView({ allocations, weeks = 24 }: HeatmapViewProps) {
     return workload;
   }, [allocations, weeksArray]);
 
-  // Function to determine cell color based on workload
+  // Function to determine cell color based on total allocation
   const getCellColor = (workload: number) => {
     if (workload === 0) return 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400';
-    if (workload <= 50) return 'bg-green-200 dark:bg-green-900/50 text-green-900 dark:text-green-100';
-    if (workload <= 80) return 'bg-yellow-200 dark:bg-yellow-900/50 text-yellow-900 dark:text-yellow-100';
-    if (workload <= 100) return 'bg-orange-200 dark:bg-orange-900/50 text-orange-900 dark:text-orange-100';
+    if (workload <= 100) return 'bg-green-200 dark:bg-green-900/50 text-green-900 dark:text-green-100';
+    if (workload <= 200) return 'bg-yellow-200 dark:bg-yellow-900/50 text-yellow-900 dark:text-yellow-100';
+    if (workload <= 300) return 'bg-orange-200 dark:bg-orange-900/50 text-orange-900 dark:text-orange-100';
     return 'bg-red-200 dark:bg-red-900/50 text-red-900 dark:text-red-100';
   };
 
-  // Get unique employee names
-  const employees = Object.keys(employeeWorkload).sort();
+  // Get unique project names
+  const projects = Object.keys(projectWorkload).sort();
 
   return (
     <div className="overflow-x-auto">
@@ -100,7 +103,7 @@ export function HeatmapView({ allocations, weeks = 24 }: HeatmapViewProps) {
       <div className="min-w-max">
         {/* Header */}
         <div className="flex">
-          <div className="w-48 shrink-0 p-2 font-medium border-b dark:border-zinc-700">Employee</div>
+          <div className="w-48 shrink-0 p-2 font-medium border-b dark:border-zinc-700">Project</div>
           <div className="flex">
             {weeksArray.map((week, index) => (
               <div 
@@ -119,25 +122,28 @@ export function HeatmapView({ allocations, weeks = 24 }: HeatmapViewProps) {
         </div>
 
         {/* Rows */}
-        {employees.map(employee => (
-          <div key={employee} className="flex border-b dark:border-zinc-700">
-            <div className="w-48 shrink-0 p-2 truncate" title={employee}>
-              {employee}
+        {projects.map(project => (
+          <div key={project} className="flex border-b dark:border-zinc-700">
+            <div className="w-48 shrink-0 p-2 truncate" title={project}>
+              {project}
             </div>
             <div className="flex">
               {weeksArray.map((week, index) => {
                 const weekKey = format(week.start, 'yyyy-MM-dd');
-                const workload = employeeWorkload[employee][weekKey] || 0;
+                const weekData = projectWorkload[project][weekKey] || { total: 0, employees: [] };
+                const employeeCount = weekData.total / 100; // Convert percentage to number of employees
                 return (
                   <div
                     key={index}
                     className={cn(
                       "w-12 h-12 border-r dark:border-zinc-700 flex items-center justify-center text-xs",
-                      getCellColor(workload)
+                      getCellColor(weekData.total)
                     )}
-                    title={`${employee}: ${workload}% (${format(week.start, 'MMM d')})`}
+                    title={`${project}: ${employeeCount.toFixed(1)} employees
+Employees: ${weekData.employees.join(', ')}
+Week of ${format(week.start, 'MMM d')}`}
                   >
-                    {workload > 0 && workload}
+                    {employeeCount > 0 && employeeCount.toFixed(1)}
                   </div>
                 );
               })}
@@ -153,28 +159,28 @@ export function HeatmapView({ allocations, weeks = 24 }: HeatmapViewProps) {
             "w-4 h-4 rounded",
             "bg-green-200 dark:bg-green-900/50"
           )}></div>
-          <span>≤ 50%</span>
+          <span>≤ 1.0</span>
         </div>
         <div className="flex items-center gap-2">
           <div className={cn(
             "w-4 h-4 rounded",
             "bg-yellow-200 dark:bg-yellow-900/50"
           )}></div>
-          <span>51-80%</span>
+          <span>1.1-2.0</span>
         </div>
         <div className="flex items-center gap-2">
           <div className={cn(
             "w-4 h-4 rounded",
             "bg-orange-200 dark:bg-orange-900/50"
           )}></div>
-          <span>81-100%</span>
+          <span>2.1-3.0</span>
         </div>
         <div className="flex items-center gap-2">
           <div className={cn(
             "w-4 h-4 rounded",
             "bg-red-200 dark:bg-red-900/50"
           )}></div>
-          <span>&gt; 100%</span>
+          <span>&gt; 3.0</span>
         </div>
       </div>
     </div>
