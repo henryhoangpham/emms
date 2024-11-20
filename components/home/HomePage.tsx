@@ -8,6 +8,8 @@ import ProjectsPage from "@/components/misc/ProjectsPage"
 import KnowledgePage from "@/components/misc/KnowledgePage"
 import AllocationsPage from "@/components/misc/AllocationsPage"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
+import MasterDataList from '@/components/misc/MasterDataList';
+import PJTDataList from '@/components/misc/PJTDataList';
 
 export default function HomePage({ user }: { user: User }) {
   const [activeTab, setActiveTab] = useState('allocations');
@@ -19,6 +21,8 @@ export default function HomePage({ user }: { user: User }) {
       {activeTab === 'clients' && <ClientsPage user={user} />}
       {activeTab === 'projects' && <ProjectsPage user={user} />}
       {activeTab === 'knowledge' && <KnowledgePage user={user} />}
+      {activeTab === 'master' && <MasterDataList user={user} />}
+      {activeTab === 'pjt-data' && <PJTDataList user={user} />}
     </DashboardLayout>
   );
 } 

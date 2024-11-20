@@ -764,3 +764,40 @@ export async function getMasterData(
 
   return { masterData, count };
 }
+
+interface PJTMasterData {
+  id: number;
+  pjt_code: string;
+  project_topic: string;
+  client: string;
+  client_pic_name: string;
+  client_pic_email: string;
+  contract_type: string;
+  inquiry_date: string;
+  proposal_date: string;
+  status: string;
+  total_count: number;
+}
+
+export async function getPJTMasterData(
+  supabase: SupabaseClient,
+  page: number = 1,
+  limit: number = 10,
+  searchString: string = ''
+) {
+  const offset = (page - 1) * limit;
+
+  const { data, error } = await supabase
+    .rpc('search_pjt_master', {
+      p_limit: limit,
+      p_offset: offset,
+      p_search_string: searchString
+    });
+
+  if (error) throw error;
+
+  return {
+    pjtData: data as PJTMasterData[],
+    count: data?.[0]?.total_count || 0
+  };
+}
