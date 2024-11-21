@@ -22,7 +22,7 @@ export default function HomePage({ user }: { user: User }) {
       {activeTab === 'projects' && <ProjectsPage user={user} />}
       {activeTab === 'knowledge' && <KnowledgePage user={user} />}
       {activeTab === 'master' && <MasterDataList user={user} />}
-      {activeTab === 'pjt-data' && <PJTDataList user={user} />}
+      {activeTab === 'pjt' && <PJTDataList user={user} />}
     </DashboardLayout>
   );
 } 

@@ -125,14 +125,14 @@ export function Sidebar({ onClose }: SidebarProps) {
               {isExpanded && <span className="ml-2">Master Data</span>}
             </Button>
           </Link>
-          <Link href="/pjt-data">
+          <Link href="/pjt">
             <Button 
-              variant={pathname.startsWith('/pjt-data') ? "secondary" : "ghost"} 
+              variant={pathname.startsWith('/pjt') ? "secondary" : "ghost"} 
               className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
               title="PJT Data"
             >
               <Database className="h-4 w-4" />
-              {isExpanded && <span className="ml-2">PJT Data</span>}
+              {isExpanded && <span className="ml-2">PJT</span>}
             </Button>
           </Link>
         </nav>
