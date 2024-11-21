@@ -73,13 +73,19 @@ export default function PJTDataList({ user }: PJTDataListProps) {
       });
       
       setLoading(true);
+
+      // If no statuses are selected, use all statuses
+      const effectiveStatuses = (currentStatuses ?? selectedStatuses).length === 0 
+        ? [...STATUS_OPTIONS] 
+        : (currentStatuses ?? selectedStatuses);
+      
       const { pjtData, count } = await getPJTMasterData(
         supabase, 
         currentPage, 
         itemsPerPage,
         currentSearchTerm ?? searchTerm,
         currentContractType ?? contractType,
-        currentStatuses ?? selectedStatuses
+        effectiveStatuses
       );
       
       if (pjtData) {
@@ -238,7 +244,7 @@ export default function PJTDataList({ user }: PJTDataListProps) {
                         className="w-full justify-between"
                       >
                         {selectedStatuses.length === 0 
-                          ? "Status" 
+                          ? "All statuses"
                           : `${selectedStatuses.length} selected`}
                         <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
