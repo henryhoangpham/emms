@@ -838,3 +838,49 @@ export async function getPJTMasterData(
     count: data?.[0]?.total_count || 0
   };
 }
+
+interface OperationalClientData {
+  ID: number;
+  Client_Code_Name: string;
+  Company_name: string;
+  Contract_Type: string;
+  Country_Code: string;
+  Invoice_Address: string;
+  Invoice_Currency: string;
+  Invoice_Entity: string;
+  Client_ID: string;
+  Account_Manager: string;
+  Client_Facing: string;
+  Geo: string;
+  Geo2: string;
+  AM: string;
+  PM: string;
+  total_count: number;
+}
+
+export async function getOperationalClients(
+  supabase: SupabaseClient,
+  page: number = 1,
+  limit: number = 10,
+  invoiceEntity: string = 'All',
+  contractType: string = 'All',
+  searchString: string = ''
+) {
+  const offset = (page - 1) * limit;
+
+  const { data, error } = await supabase
+    .rpc('search_operational_clients', {
+      p_limit: limit,
+      p_offset: offset,
+      p_invoice_entity: invoiceEntity,
+      p_contract_type: contractType,
+      p_search_string: searchString
+    });
+
+  if (error) throw error;
+
+  return {
+    operationalClients: data as OperationalClientData[],
+    count: data?.[0]?.total_count || 0
+  };
+}

@@ -10,6 +10,7 @@ import AllocationsPage from "@/components/misc/AllocationsPage"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import MasterDataList from '@/components/misc/MasterDataList';
 import PJTDataList from '@/components/misc/PJTDataList';
+import OperationalClientList from '@/components/misc/OperationalClientList';
 
 export default function HomePage({ user }: { user: User }) {
   const [activeTab, setActiveTab] = useState('allocations');
@@ -23,6 +24,7 @@ export default function HomePage({ user }: { user: User }) {
       {activeTab === 'knowledge' && <KnowledgePage user={user} />}
       {activeTab === 'master' && <MasterDataList user={user} />}
       {activeTab === 'pjt' && <PJTDataList user={user} />}
+      {activeTab === 'operational-clients' && <OperationalClientList user={user} />}
     </DashboardLayout>
   );
 } 

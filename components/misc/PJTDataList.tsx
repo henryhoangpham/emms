@@ -17,6 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/utils/cn";
+import { TableWrapper } from '@/components/ui/table-wrapper';
 
 const CONTRACT_TYPES = [
   'All',
@@ -311,42 +312,45 @@ export default function PJTDataList({ user }: PJTDataListProps) {
             </div>
           </div>
 
-          <table className="w-full">
-            <thead>
-              <tr className="text-left bg-muted">
-                <th className="p-2">PJT Code</th>
-                <th className="p-2">Project Topic</th>
-                <th className="p-2">Client</th>
-                <th className="p-2">Client PIC</th>
-                <th className="p-2">Contract Type</th>
-                <th className="p-2">Inquiry Date</th>
-                <th className="p-2">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((item) => (
-                <tr 
-                  key={item.id}
-                  className="border-b hover:bg-muted/50"
-                >
-                  <td className="p-2">{item.pjt_code || '-'}</td>
-                  <td className="p-2">{item.project_topic || '-'}</td>
-                  <td className="p-2">{item.client || '-'}</td>
-                  <td className="p-2">
-                    <div>
-                      <div>{item.client_pic_name || '-'}</div>
-                      <div className="text-sm text-muted-foreground">{item.client_pic_email || '-'}</div>
-                    </div>
-                  </td>
-                  <td className="p-2">{item.contract_type || '-'}</td>
-                  <td className="p-2">
-                    {item.inquiry_date ? format(new Date(item.inquiry_date), 'dd/MM/yyyy') : '-'}
-                  </td>
-                  <td className="p-2">{item.status || '-'}</td>
+          {/* Wrap the table with TableWrapper */}
+          <TableWrapper>
+            <table className="w-full">
+              <thead>
+                <tr className="text-left bg-muted">
+                  <th className="p-2 whitespace-nowrap">PJT Code</th>
+                  <th className="p-2 whitespace-nowrap">Project Topic</th>
+                  <th className="p-2 whitespace-nowrap">Client</th>
+                  <th className="p-2 whitespace-nowrap">Client PIC</th>
+                  <th className="p-2 whitespace-nowrap">Contract Type</th>
+                  <th className="p-2 whitespace-nowrap">Inquiry Date</th>
+                  <th className="p-2 whitespace-nowrap">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {data.map((item) => (
+                  <tr 
+                    key={item.id}
+                    className="border-b hover:bg-muted/50"
+                  >
+                    <td className="p-2 whitespace-nowrap">{item.pjt_code || '-'}</td>
+                    <td className="p-2 max-w-md break-words">{item.project_topic || '-'}</td>
+                    <td className="p-2 whitespace-nowrap">{item.client || '-'}</td>
+                    <td className="p-2 whitespace-nowrap">
+                      <div>
+                        <div>{item.client_pic_name || '-'}</div>
+                        <div className="text-sm text-muted-foreground">{item.client_pic_email || '-'}</div>
+                      </div>
+                    </td>
+                    <td className="p-2 whitespace-nowrap">{item.contract_type || '-'}</td>
+                    <td className="p-2 whitespace-nowrap">
+                      {item.inquiry_date ? format(new Date(item.inquiry_date), 'dd/MM/yyyy') : '-'}
+                    </td>
+                    <td className="p-2 whitespace-nowrap">{item.status || '-'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </TableWrapper>
 
           <Pagination
             currentPage={currentPage}

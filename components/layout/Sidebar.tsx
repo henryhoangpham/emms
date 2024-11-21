@@ -135,6 +135,16 @@ export function Sidebar({ onClose }: SidebarProps) {
               {isExpanded && <span className="ml-2">PJT</span>}
             </Button>
           </Link>
+          <Link href="/operational-clients">
+            <Button 
+              variant={pathname.startsWith('/operational-clients') ? "secondary" : "ghost"} 
+              className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
+              title="Operational Clients"
+            >
+              <Users className="h-4 w-4" />
+              {isExpanded && <span className="ml-2">Operational Clients</span>}
+            </Button>
+          </Link>
         </nav>
       </div>
     </aside>
