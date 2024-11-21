@@ -783,7 +783,9 @@ export async function getPJTMasterData(
   supabase: SupabaseClient,
   page: number = 1,
   limit: number = 10,
-  searchString: string = ''
+  searchString: string = '',
+  contractType: string = 'All',
+  statuses: string[] = ['0.Proposal', '1. On going']
 ) {
   const offset = (page - 1) * limit;
 
@@ -791,7 +793,9 @@ export async function getPJTMasterData(
     .rpc('search_pjt_master', {
       p_limit: limit,
       p_offset: offset,
-      p_search_string: searchString
+      p_search_string: searchString,
+      p_contract_type: contractType,
+      p_status: statuses
     });
 
   if (error) throw error;
