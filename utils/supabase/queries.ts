@@ -740,29 +740,62 @@ export async function getEmployeeSuggestions(
   return employees || [];
 }
 
+interface MasterData {
+  id: string;
+  exlink_expert_id: number;
+  recruiter: string;
+  date: string;
+  candidate_expert: string;
+  pjt: string;
+  channel: string;
+  name: string;
+  period_of_enrollment: string;
+  position: string;
+  linkedin: string;
+  fee_for_expert: number;
+  fee_from_client: number;
+  net_revenue: number;
+  proposed_currency: string;
+  duration: number;
+  item_id: string;
+  currency_id: string;
+  expert_billing_data: string;
+  expert_billing_currency: string;
+  monthly_id: string;
+  total_count: number;
+}
+
 export async function getMasterData(
   supabase: SupabaseClient,
-  page?: number,
-  itemsPerPage?: number
+  page: number = 1,
+  limit: number = 10,
+  dateFrom?: string | null,
+  dateTo?: string | null,
+  candidateExperts?: string[] | null,
+  searchString: string = ''
 ) {
-  let query = supabase
-    .from('MasterNew2024')
-    .select('*', { count: 'exact' })
-    .order('date', { ascending: false });
+  const offset = (page - 1) * limit;
 
-  if (page !== undefined && itemsPerPage !== undefined) {
-    const startRow = (page - 1) * itemsPerPage;
-    query = query.range(startRow, startRow + itemsPerPage - 1);
-  }
+  // Validate dates before sending to API
+  const validDateFrom = dateFrom && dateFrom.trim() !== '' ? dateFrom : null;
+  const validDateTo = dateTo && dateTo.trim() !== '' ? dateTo : null;
 
-  const { data: masterData, error, count } = await query;
+  const { data, error } = await supabase
+    .rpc('search_masternew2024', {
+      p_limit: limit,
+      p_offset: offset,
+      p_date_from: validDateFrom,
+      p_date_to: validDateTo,
+      p_candidate_expert: candidateExperts,
+      p_search_string: searchString
+    });
 
-  if (error) {
-    console.error('Error fetching master data:', error);
-    return { masterData: null, count: 0 };
-  }
+  if (error) throw error;
 
-  return { masterData, count };
+  return {
+    masterData: data as MasterData[],
+    count: data?.[0]?.total_count || 0
+  };
 }
 
 interface PJTMasterData {
