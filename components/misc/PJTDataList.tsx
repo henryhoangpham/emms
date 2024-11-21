@@ -206,91 +206,102 @@ export default function PJTDataList({ user }: PJTDataListProps) {
           <CardTitle>PJT Data List</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="mb-4 flex flex-col gap-4 md:flex-row">
-            <Input
-              ref={searchInputRef}
-              placeholder="Search..."
-              value={searchTerm}
-              onChange={handleSearchChange}
-              className="md:w-1/3"
-            />
-            <Select
-              value={contractType}
-              onValueChange={handleContractTypeChange}
-            >
-              <SelectTrigger className="md:w-1/3">
-                <SelectValue placeholder="Select contract type" />
-              </SelectTrigger>
-              <SelectContent>
-                {CONTRACT_TYPES.map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {type}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <div className="md:w-1/3">
-              <Popover open={statusSearchOpen} onOpenChange={setStatusSearchOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={statusSearchOpen}
-                    className="w-full justify-between"
+          <div className="mb-4 grid gap-4 grid-cols-1 md:grid-cols-2">
+            {/* Other controls - spans half width on desktop */}
+            <div className="order-1">
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <Select
+                    value={contractType}
+                    onValueChange={handleContractTypeChange}
                   >
-                    {selectedStatuses.length === 0 
-                      ? "Select statuses..." 
-                      : `${selectedStatuses.length} selected`}
-                    <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-full p-0">
-                  <Command>
-                    <CommandInput placeholder="Search statuses..." />
-                    <CommandEmpty>No status found.</CommandEmpty>
-                    <CommandGroup className="max-h-64 overflow-auto">
-                      {STATUS_OPTIONS.map((status) => (
-                        <CommandItem
-                          key={status}
-                          value={status}
-                          onSelect={() => handleStatusSelect(status)}
-                        >
-                          <div className="flex items-center gap-2">
-                            <div className={cn(
-                              "h-4 w-4 border rounded-sm flex items-center justify-center",
-                              selectedStatuses.includes(status) ? "bg-primary border-primary" : "border-input"
-                            )}>
-                              {selectedStatuses.includes(status) && 
-                                <Check className="h-3 w-3 text-primary-foreground" />
-                              }
-                            </div>
-                            {status}
-                          </div>
-                        </CommandItem>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Contract type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CONTRACT_TYPES.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {type}
+                        </SelectItem>
                       ))}
-                    </CommandGroup>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {selectedStatuses.map((status) => (
-                  <Badge
-                    key={status}
-                    variant="secondary"
-                    className="flex items-center gap-1"
-                  >
-                    {status}
-                    <button
-                      type="button"
-                      className="ml-1 hover:bg-muted rounded-full"
-                      onClick={() => removeStatus(status)}
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </Badge>
-                ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex-1">
+                  <Popover open={statusSearchOpen} onOpenChange={setStatusSearchOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={statusSearchOpen}
+                        className="w-full justify-between"
+                      >
+                        {selectedStatuses.length === 0 
+                          ? "Status" 
+                          : `${selectedStatuses.length} selected`}
+                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[200px] p-0">
+                      <Command>
+                        <CommandInput placeholder="Search statuses..." />
+                        <CommandEmpty>No status found.</CommandEmpty>
+                        <CommandGroup className="max-h-64 overflow-auto">
+                          {STATUS_OPTIONS.map((status) => (
+                            <CommandItem
+                              key={status}
+                              value={status}
+                              onSelect={() => handleStatusSelect(status)}
+                            >
+                              <div className="flex items-center gap-2">
+                                <div className={cn(
+                                  "h-4 w-4 border rounded-sm flex items-center justify-center",
+                                  selectedStatuses.includes(status) ? "bg-primary border-primary" : "border-input"
+                                )}>
+                                  {selectedStatuses.includes(status) && 
+                                    <Check className="h-3 w-3 text-primary-foreground" />
+                                  }
+                                </div>
+                                {status}
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {selectedStatuses.map((status) => (
+                      <Badge
+                        key={status}
+                        variant="secondary"
+                        className="flex items-center gap-1"
+                      >
+                        {status}
+                        <button
+                          type="button"
+                          className="ml-1 hover:bg-muted rounded-full"
+                          onClick={() => removeStatus(status)}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
               </div>
+            </div>
+
+            {/* Search box - spans half width on desktop */}
+            <div className="order-2">
+              <Input
+                ref={searchInputRef}
+                placeholder="Search..."
+                value={searchTerm}
+                onChange={handleSearchChange}
+                className="w-full"
+              />
             </div>
           </div>
 

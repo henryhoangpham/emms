@@ -197,8 +197,99 @@ export default function MasterDataList({ user }: MasterDataListProps) {
           <CardTitle>Master Data List</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="mb-4 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <div>
+          <div className="mb-4 grid gap-4 grid-cols-1 md:grid-cols-2">
+            {/* Other controls - spans half width on desktop */}
+            <div className="order-1">
+              <div className="flex gap-4">
+                <div className="w-40">
+                  <Label>Record Type</Label>
+                  <Popover open={recordTypeSearchOpen} onOpenChange={setRecordTypeSearchOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={recordTypeSearchOpen}
+                        className="w-full justify-between"
+                      >
+                        {selectedRecordTypes.length === 0 
+                          ? "All types" 
+                          : `${selectedRecordTypes.length} selected`}
+                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[200px] p-0">
+                      <Command>
+                        <CommandInput placeholder="Search record types..." />
+                        <CommandEmpty>No type found.</CommandEmpty>
+                        <CommandGroup className="max-h-64 overflow-auto">
+                          {RECORD_TYPES.map((recordType) => (
+                            <CommandItem
+                              key={recordType}
+                              value={recordType}
+                              onSelect={() => handleRecordTypeSelect(recordType)}
+                            >
+                              <div className="flex items-center gap-2">
+                                <div className={cn(
+                                  "h-4 w-4 border rounded-sm flex items-center justify-center",
+                                  selectedRecordTypes.includes(recordType) ? "bg-primary border-primary" : "border-input"
+                                )}>
+                                  {selectedRecordTypes.includes(recordType) && 
+                                    <Check className="h-3 w-3 text-primary-foreground" />
+                                  }
+                                </div>
+                                {recordType}
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {selectedRecordTypes.map((recordType) => (
+                      <Badge
+                        key={recordType}
+                        variant="secondary"
+                        className="flex items-center gap-1"
+                      >
+                        {recordType}
+                        <button
+                          type="button"
+                          className="ml-1 hover:bg-muted rounded-full"
+                          onClick={() => removeRecordType(recordType)}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex-1 flex gap-2">
+                  <div className="w-1/2">
+                    <Label htmlFor="dateFrom">From</Label>
+                    <Input
+                      id="dateFrom"
+                      type="date"
+                      value={dateFrom}
+                      onChange={handleDateFromChange}
+                    />
+                  </div>
+                  <div className="w-1/2">
+                    <Label htmlFor="dateTo">To</Label>
+                    <Input
+                      id="dateTo"
+                      type="date"
+                      value={dateTo}
+                      onChange={handleDateToChange}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Search box - spans half width on desktop */}
+            <div className="order-2">
               <Label htmlFor="search">Search</Label>
               <Input
                 id="search"
@@ -206,92 +297,8 @@ export default function MasterDataList({ user }: MasterDataListProps) {
                 placeholder="Search..."
                 value={searchTerm}
                 onChange={handleSearchChange}
+                className="w-full"
               />
-            </div>
-
-            <div className="flex gap-2">
-              <div className="flex-1">
-                <Label htmlFor="dateFrom">From Date</Label>
-                <Input
-                  id="dateFrom"
-                  type="date"
-                  value={dateFrom}
-                  onChange={handleDateFromChange}
-                />
-              </div>
-              <div className="flex-1">
-                <Label htmlFor="dateTo">To Date</Label>
-                <Input
-                  id="dateTo"
-                  type="date"
-                  value={dateTo}
-                  onChange={handleDateToChange}
-                />
-              </div>
-            </div>
-
-            <div className="col-span-2">
-              <Label>Record Type</Label>
-              <Popover open={recordTypeSearchOpen} onOpenChange={setRecordTypeSearchOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={recordTypeSearchOpen}
-                    className="w-full justify-between"
-                  >
-                    {selectedRecordTypes.length === 0 
-                      ? "All record types" 
-                      : `${selectedRecordTypes.length} selected`}
-                    <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-full p-0">
-                  <Command>
-                    <CommandInput placeholder="Search record types..." />
-                    <CommandEmpty>No type found.</CommandEmpty>
-                    <CommandGroup className="max-h-64 overflow-auto">
-                      {RECORD_TYPES.map((recordType) => (
-                        <CommandItem
-                          key={recordType}
-                          value={recordType}
-                          onSelect={() => handleRecordTypeSelect(recordType)}
-                        >
-                          <div className="flex items-center gap-2">
-                            <div className={cn(
-                              "h-4 w-4 border rounded-sm flex items-center justify-center",
-                              selectedRecordTypes.includes(recordType) ? "bg-primary border-primary" : "border-input"
-                            )}>
-                              {selectedRecordTypes.includes(recordType) && 
-                                <Check className="h-3 w-3 text-primary-foreground" />
-                              }
-                            </div>
-                            {recordType}
-                          </div>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {selectedRecordTypes.map((recordType) => (
-                  <Badge
-                    key={recordType}
-                    variant="secondary"
-                    className="flex items-center gap-1"
-                  >
-                    {recordType}
-                    <button
-                      type="button"
-                      className="ml-1 hover:bg-muted rounded-full"
-                      onClick={() => removeRecordType(recordType)}
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
             </div>
           </div>
 
