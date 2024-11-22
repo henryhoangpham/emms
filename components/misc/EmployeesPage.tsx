@@ -35,7 +35,7 @@ export default function EmployeesPage({ user }: EmployeesPageProps) {
   async function loadEmployees() {
     try {
       setLoading(true);
-      const supabase = createClient();
+      const supabase = await createClient();
       const { employees, count } = await getEmployees(supabase, currentTenant!.id, currentPage, itemsPerPage);
       if (employees) {
         setEmployees(employees);

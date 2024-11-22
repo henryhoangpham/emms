@@ -1,29 +1,38 @@
+'use client';
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/useAuth';
 import AddAllocationForm from '@/components/misc/AddAllocationForm';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { createClient } from '@/utils/supabase/server';
-import { redirect } from 'next/navigation';
-import { getUser } from '@/utils/supabase/queries';
-import { toast } from '@/components/ui/use-toast';
-import { SupabaseClient } from '@supabase/supabase-js';
+import { useToast } from '@/components/ui/use-toast';
 
-export default async function AddAllocation() {
-  const supabase: SupabaseClient = createClient();
-  let user;
+export default function AddAllocation() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+  const { toast } = useToast();
 
-  try {
-    user = await getUser(supabase);
-  } catch (error) {
-    console.error("Error fetching user:", error);
-    toast({
-      title: "Error",
-      description: "Failed to fetch user data. Please try again.",
-      variant: "destructive",
-    });
-    return redirect('/allocations');
+  useEffect(() => {
+    if (!loading && !user) {
+      toast({
+        title: "Error",
+        description: "Please sign in to access this page.",
+        variant: "destructive",
+      });
+      router.push('/auth/signin');
+    }
+  }, [user, loading, router, toast]);
+
+  if (loading) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
   if (!user) {
-    return redirect('/auth/signin');
+    return null;
   }
 
   return (

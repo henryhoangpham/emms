@@ -42,7 +42,7 @@ export default function AllocationsPage({ user }: AllocationsPageProps) {
   async function loadAllocations() {
     try {
       setLoading(true);
-      const supabase = createClient();
+      const supabase = await createClient();
       // For calendar view, we don't need pagination
       const { allocations: allocationData, count } = await getAllocations(
         supabase,

@@ -6,6 +6,7 @@ import { User } from '@supabase/supabase-js';
 import { useToast } from '@/components/ui/use-toast';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { getOperationalClients } from '@/utils/supabase/queries';
+import type { OperationalClientData } from '@/utils/supabase/queries';
 import { Pagination } from '@/components/ui/pagination';
 import { DEFAULT_ITEMS_PER_PAGE } from '@/utils/constants';
 import { Input } from '@/components/ui/input';
@@ -32,7 +33,7 @@ interface OperationalClientListProps {
 }
 
 export default function OperationalClientList({ user }: OperationalClientListProps) {
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<OperationalClientData[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(DEFAULT_ITEMS_PER_PAGE);

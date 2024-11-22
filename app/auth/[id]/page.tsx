@@ -1,30 +1,49 @@
-import { createClient } from '@/utils/supabase/server';
-import { redirect } from 'next/navigation';
-import AuthForm, { AuthState } from '@/components/misc/AuthForm';
-import { Navbar } from '@/components/layout/Navbar';
+'use client';
 
-export default async function Auth({ params }: { params: { id: string } }) {
-  const supabase = createClient();
+import { useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/components/ui/use-toast';
+import HomePage from '@/components/home/HomePage';
 
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
+interface PageProps {
+  params: {
+    id: string;
+  };
+}
 
-  if (user) {
-    return redirect('/');
+export default function AuthPage() {
+  const { user, loading } = useAuth();
+  const params = useParams();
+  const router = useRouter();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      toast({
+        title: "Error",
+        description: "Please sign in to access this page.",
+        variant: "destructive",
+      });
+      router.push('/auth/signin');
+    }
+  }, [user, loading, router, toast]);
+
+  if (loading) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
-  const currState = params.id as AuthState;
-  if (!['signin', 'signup', 'forgot_password'].includes(currState)) {
-    return redirect('/auth/signin');
+  if (!user) {
+    return null;
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <Navbar user={user} onMenuClick={() => {}} />
-      <div className="flex grow justify-center items-center">
-        <AuthForm state={currState} />
-      </div>
+    <div className="h-screen">
+      <HomePage user={user} />
     </div>
   );
 }

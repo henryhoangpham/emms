@@ -5,7 +5,7 @@ import { getUser } from '@/utils/supabase/queries';
 import MasterDataList from '@/components/misc/MasterDataList';
 
 export default async function Master() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const user = await getUser(supabase);
   
   if (!user) {

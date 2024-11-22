@@ -30,7 +30,7 @@ export default function AuthForm({ state = 'signin' }: AuthFormProps) {
     setLoading(true);
 
     try {
-      const supabase = createClient();
+      const supabase = await createClient();
       
       if (state === 'signin') {
         // Sign in the user
@@ -74,7 +74,7 @@ export default function AuthForm({ state = 'signin' }: AuthFormProps) {
       setError(error.message || 'An error occurred');
       // If there was an error during sign in, make sure we're signed out
       if (state === 'signin') {
-        const supabase = createClient();
+        const supabase = await createClient();
         await supabase.auth.signOut();
       }
     } finally {

@@ -1,34 +1,44 @@
+'use client';
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/useAuth';
 import AddProjectForm from '@/components/misc/AddProjectForm';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { createClient } from '@/utils/supabase/server';
-import { SupabaseClient } from '@supabase/supabase-js';
-import { redirect } from 'next/navigation';
-import { getUser } from '@/utils/supabase/queries';
-import { toast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 
-export default async function AddProject() {
-  const supabase: SupabaseClient = createClient();
-  let user;
+export default function AddProject() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+  const { toast } = useToast();
 
-  try {
-    user = await getUser(supabase);
-  } catch (error) {
-    console.error("Error fetching user:", error);
-    toast({
-      title: "Error",
-      description: "Failed to fetch user data. Please try again.",
-      variant: "destructive",
-    });
-    return redirect('/projects');
+  useEffect(() => {
+    if (!loading && !user) {
+      toast({
+        title: "Error",
+        description: "Please sign in to access this page.",
+        variant: "destructive",
+      });
+      router.push('/auth/signin');
+    }
+  }, [user, loading, router, toast]);
+
+  if (loading) {
+    return <div>Loading...</div>;
   }
 
   if (!user) {
-    return redirect('/auth/signin');
+    return null;
   }
 
   return (
-    <DashboardLayout user={user}>
-      <AddProjectForm projectId={null}/>
-    </DashboardLayout>
+    <div className="h-screen">
+      <DashboardLayout user={user}>
+        <AddProjectForm 
+          projectId={null} 
+          user={user}
+        />
+      </DashboardLayout>
+    </div>
   );
 }

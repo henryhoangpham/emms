@@ -1,35 +1,49 @@
-import { createClient } from '@/utils/supabase/server';
-import { getUser } from '@/utils/supabase/queries';
+'use client';
+
+import { useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/useAuth';
 import AddProjectForm from '@/components/misc/AddProjectForm';
-import { redirect } from 'next/navigation';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { SupabaseClient } from '@supabase/supabase-js';
-import { toast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 
-export default async function EditProject({ params }: { params: { id: string } }) {
-  const supabase: SupabaseClient = createClient();
-  let user;
+export default function EditProject() {
+  const { user, loading } = useAuth();
+  const params = useParams();
+  const router = useRouter();
+  const { toast } = useToast();
+  const projectId = params.id as string;
 
-  try {
-    user = await getUser(supabase);
-  } catch (error) {
-    console.error("Error fetching user:", error);
-    toast({
-      title: "Error",
-      description: "Failed to fetch user data. Please try again.",
-      variant: "destructive",
-    });
-    return redirect('/projects');
+  useEffect(() => {
+    if (!loading && !user) {
+      toast({
+        title: "Error",
+        description: "Please sign in to access this page.",
+        variant: "destructive",
+      });
+      router.push('/auth/signin');
+    }
+  }, [user, loading, router, toast]);
+
+  if (loading) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
   if (!user) {
-    return redirect('/auth/signin');
+    return null;
   }
 
   return (
     <div className="h-screen">
       <DashboardLayout user={user}>
-        <AddProjectForm projectId={params.id} />
+        <AddProjectForm 
+          projectId={projectId} 
+          user={user}
+        />
       </DashboardLayout>
     </div>
   );

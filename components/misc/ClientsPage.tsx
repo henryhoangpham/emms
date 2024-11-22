@@ -36,7 +36,7 @@ export default function ClientsPage({ user }: ClientsPageProps) {
   async function loadClients() {
     try {
       setLoading(true);
-      const supabase = createClient();
+      const supabase = await createClient();
       const { clients, count } = await getClients(supabase, currentTenant!.id, currentPage, itemsPerPage);
       if (clients) {
         setClients(clients);

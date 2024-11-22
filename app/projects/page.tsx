@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import { getUser } from '@/utils/supabase/queries';
 
 export default async function Projects() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const user = await getUser(supabase);
   
   if (!user) {

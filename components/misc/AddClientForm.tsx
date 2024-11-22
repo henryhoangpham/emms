@@ -86,7 +86,7 @@ export default function AddClientForm({ clientId }: { clientId: string | null}) 
     }
 
     try {
-      const supabase = createClient();
+      const supabase = await createClient();
       let data;
 
       const clientData = {

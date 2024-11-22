@@ -37,7 +37,7 @@ export default function KnowledgePage({ user }: KnowledgePageProps) {
   async function loadKnowledges() {
     try {
       setLoading(true);
-      const supabase = createClient();
+      const supabase = await createClient();
       const { knowledges, count } = await getKnowledges(supabase, currentTenant!.id, currentPage, itemsPerPage);
       if (knowledges) {
         setKnowledges(knowledges);

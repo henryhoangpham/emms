@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createClient } from '@/utils/supabase/client';
-import { SupabaseClient } from '@supabase/supabase-js';
+import { SupabaseClient, User } from '@supabase/supabase-js';
 import { Autocomplete } from '@/components/ui/autocomplete';
 import { CustomCheckbox } from '@/components/ui/custom-checkbox';
 import { useTenant } from '@/utils/tenant-context';
@@ -111,7 +111,12 @@ const getCellColor = (workload: number) => {
   return 'bg-red-200 dark:bg-red-900/50 text-red-900 dark:text-red-100';
 };
 
-export default function AddProjectForm({ projectId }: { projectId: string | null }) {
+interface AddProjectFormProps {
+  projectId: string | null;
+  user: User;
+}
+
+export default function AddProjectForm({ projectId, user }: AddProjectFormProps) {
   const [projectDates, setProjectDates] = useState({
     start_date: '',
     end_date: ''
@@ -174,8 +179,9 @@ export default function AddProjectForm({ projectId }: { projectId: string | null
 
       try {
         setLoading(true);
+        
         // Fetch clients
-        const { clients: clientsData } = await getClients(supabase, currentTenant!.id);
+        const { clients: clientsData } = await getClients(supabase, currentTenant.id);
         if (clientsData) {
           setClients(clientsData);
         }
@@ -189,7 +195,7 @@ export default function AddProjectForm({ projectId }: { projectId: string | null
         // Fetch project if editing
         if (projectId) {
           const project = await getProject(supabase, projectId);
-          if (project) {
+          if (project && project.tenant_id === currentTenant.id) {
             setFormData({
               ...initialFormData,
               ...project,
@@ -197,29 +203,39 @@ export default function AddProjectForm({ projectId }: { projectId: string | null
               deal_status: project.deal_status || 'PENDING',
             });
             
-            // Set dates separately
             setProjectDates({
               start_date: project.start_date ? project.start_date.split('T')[0] : '',
               end_date: project.end_date ? project.end_date.split('T')[0] : '',
             });
-          }
 
-          // If editing, fetch project's knowledges
-          const projectKnowledges = await getProjectKnowledges(supabase, projectId);
-          if (projectKnowledges) {
-            setProjectKnowledges(projectKnowledges.map(pk => pk.knowledge_id));
+            // Fetch project's knowledges
+            const projectKnowledges = await getProjectKnowledges(supabase, projectId);
+            if (projectKnowledges) {
+              setProjectKnowledges(projectKnowledges.map(pk => pk.knowledge_id));
+            }
+          } else {
+            toast({
+              title: "Error",
+              description: "Project not found or belongs to different tenant.",
+              variant: "destructive",
+            });
+            router.push('/projects');
           }
         }
       } catch (error) {
         console.error('Error fetching data:', error);
-        setError('Failed to load data');
+        toast({
+          title: "Error",
+          description: "Failed to load data. Please try again.",
+          variant: "destructive",
+        });
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [projectId, currentTenant]);
+  }, [projectId, currentTenant, router, toast]);
 
   useEffect(() => {
     const fetchAllocatedEmployees = async () => {
@@ -373,7 +389,7 @@ export default function AddProjectForm({ projectId }: { projectId: string | null
     }
 
     try {
-      const supabase = createClient();
+      const supabase = await createClient();
       const employees = await getEmployeeSuggestions(supabase, currentTenant.id, projectKnowledges);
 
       // Map directly to EmployeeSuggestion type

@@ -36,7 +36,7 @@ export default function ProjectsPage({ user }: ProjectsPageProps) {
   async function loadProjects() {
     try {
       setLoading(true);
-      const supabase = createClient();
+      const supabase = await createClient();
       const { projects, count } = await getProjects(supabase, currentTenant!.id, currentPage, itemsPerPage);
       if (projects) {
         setProjects(projects);

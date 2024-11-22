@@ -76,7 +76,7 @@ export default function AddKnowledgeForm({ knowledgeId }: { knowledgeId: string 
     }
 
     try {
-      const supabase = createClient();
+      const supabase = await createClient();
       const knowledgeData = {
         ...formData,
         tenant_id: currentTenant.id

@@ -1,9 +1,9 @@
-import AuthForm from '@/components/misc/AuthForm';
-import { createClient } from '@/utils/supabase/server';
 import { redirect } from 'next/navigation';
+import { createClient } from '@/utils/supabase/server';
+import SignInForm from '@/components/misc/AuthForm';
 
 export default async function SignIn() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user }
@@ -13,11 +13,5 @@ export default async function SignIn() {
     return redirect('/');
   }
 
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="w-full max-w-md">
-        <AuthForm />
-      </div>
-    </div>
-  );
+  return <SignInForm />;
 } 

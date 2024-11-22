@@ -4,7 +4,7 @@ import OperationalClientList from '@/components/misc/OperationalClientList';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 
 export default async function OperationalClientsPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {

@@ -91,7 +91,7 @@ export default function DepartmentsPage({ user }: DepartmentsPageProps) {
   async function loadDepartments() {
     try {
       setLoading(true);
-      const supabase = createClient();
+      const supabase = await createClient();
       const { departments } = await getDepartments(supabase, currentTenant!.id);
       if (departments) {
         setDepartments(departments);
