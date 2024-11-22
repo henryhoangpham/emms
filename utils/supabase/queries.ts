@@ -839,22 +839,23 @@ export async function getPJTMasterData(
   };
 }
 
-interface OperationalClientData {
-  ID: number;
-  Client_Code_Name: string;
-  Company_name: string;
-  Contract_Type: string;
-  Country_Code: string;
-  Invoice_Address: string;
-  Invoice_Currency: string;
-  Invoice_Entity: string;
-  Client_ID: string;
-  Account_Manager: string;
-  Client_Facing: string;
-  Geo: string;
-  Geo2: string;
-  AM: string;
-  PM: string;
+export interface OperationalClientData {
+  id: number;
+  client_code_name: string;
+  company_name: string;
+  contract_type: string;
+  country_code: string;
+  invoice_address: string;
+  invoice_currency: string;
+  invoice_entity: string;
+  client_id: string;
+  account_manager: string;
+  client_facing: string;
+  geo: string;
+  am: string;
+  pm: string;
+  company_segment: string;
+  existing_account_priority: number;
   total_count: number;
 }
 
