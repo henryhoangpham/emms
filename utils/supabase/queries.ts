@@ -888,3 +888,49 @@ export async function getOperationalClients(
     count: data?.[0]?.total_count || 0
   };
 }
+
+export interface ClientCombineStatsResponse {
+  client_code: string;
+  monthly_data: {
+    month: string;
+    stats: {
+      iv: number;
+      dbiv: number;
+      cdd: number;
+      dbcdd: number;
+      revenue: number;
+      net_revenue: number;
+      pjt: number;
+      cr: number;
+    };
+  }[];
+  ytd_totals: {
+    year: string;
+    stats: {
+      iv: number;
+      dbiv: number;
+      cdd: number;
+      dbcdd: number;
+      revenue: number;
+      net_revenue: number;
+      pjt: number;
+      cr: number;
+    };
+  };
+}
+
+export async function getClientCombineStats(
+  supabase: SupabaseClient,
+  clientCodes: string[],
+  year: string = new Date().getFullYear().toString()
+) {
+  const { data, error } = await supabase
+    .rpc('get_client_combine_stats', {
+      p_client_codes: clientCodes,
+      p_year: year
+    });
+
+  if (error) throw error;
+
+  return data as ClientCombineStatsResponse[];
+}

@@ -5,13 +5,12 @@ import { createClient } from '@/utils/supabase/client';
 import { User } from '@supabase/supabase-js';
 import { useToast } from '@/components/ui/use-toast';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { getOperationalClients } from '@/utils/supabase/queries';
-import type { OperationalClientData } from '@/utils/supabase/queries';
+import { getOperationalClients, getClientCombineStats } from '@/utils/supabase/queries';
+import type { OperationalClientData, ClientCombineStatsResponse } from '@/utils/supabase/queries';
 import { Pagination } from '@/components/ui/pagination';
 import { DEFAULT_ITEMS_PER_PAGE } from '@/utils/constants';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { TableWrapper } from '@/components/ui/table-wrapper';
 
 const INVOICE_ENTITIES = [
   'All',
@@ -45,6 +44,50 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
   const supabase = createClient();
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
+  const [statsLoading, setStatsLoading] = useState(false);
+  const [statsData, setStatsData] = useState<Record<string, ClientCombineStatsResponse>>({});
+  const statsAbortController = useRef<AbortController | null>(null);
+
+  const fetchStats = useCallback(async (clientCodes: string[]) => {
+    if (statsAbortController.current) {
+      statsAbortController.current.abort();
+    }
+
+    statsAbortController.current = new AbortController();
+
+    try {
+      setStatsLoading(true);
+      const stats = await getClientCombineStats(supabase, clientCodes);
+      
+      const statsRecord = stats.reduce((acc, stat) => {
+        acc[stat.client_code] = stat;
+        return acc;
+      }, {} as Record<string, ClientCombineStatsResponse>);
+      
+      console.log('statsRecord:', statsRecord);
+      setStatsData(statsRecord);
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        console.log('Request was aborted');
+      } else if (error.name === 'TimeoutError' || error.code === '504') {
+        console.error('Request timed out:', error);
+        toast({
+          title: 'Timeout Error',
+          description: 'The request took too long to complete. Please try again.',
+          variant: 'destructive',
+        });
+      } else {
+        console.error('Error fetching stats:', error);
+        toast({
+          title: 'Warning',
+          description: 'Failed to load some statistics. The list will continue to display with partial data.',
+          variant: 'destructive',
+        });
+      }
+    } finally {
+      setStatsLoading(false);
+    }
+  }, [supabase, toast]);
 
   const fetchData = useCallback(async (
     skipDebounce: boolean = false,
@@ -53,15 +96,6 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
     currentContractType?: string,
   ) => {
     try {
-      console.log('fetchData: starting', {
-        skipDebounce,
-        currentPage,
-        itemsPerPage,
-        searchTerm: currentSearchTerm ?? searchTerm,
-        invoiceEntity: currentInvoiceEntity ?? invoiceEntity,
-        contractType: currentContractType ?? contractType,
-      });
-      
       setLoading(true);
       
       const { operationalClients, count } = await getOperationalClients(
@@ -76,6 +110,11 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
       if (operationalClients) {
         setData(operationalClients);
         setTotalItems(count || 0);
+
+        const clientCodes = operationalClients.map(client => client.client_code_name);
+        if (clientCodes.length > 0) {
+          fetchStats(clientCodes);
+        }
       }
     } catch (error) {
       console.error('Error:', error);
@@ -86,9 +125,8 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
       });
     } finally {
       setLoading(false);
-      console.log('fetchData: finished');
     }
-  }, [supabase, currentPage, itemsPerPage, searchTerm, invoiceEntity, contractType, toast]);
+  }, [supabase, currentPage, itemsPerPage, searchTerm, invoiceEntity, contractType, toast, fetchStats]);
 
   const debouncedSearch = useCallback((
     fromSearchInput: boolean = false,
@@ -149,6 +187,80 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
     if (priority === 4) return 'bg-red-100';
     if (priority > 4) return 'bg-red-200';
     return '';
+  };
+
+  const getStatsForClient = (clientCode: string) => {
+    return statsData[clientCode]?.ytd_totals?.stats || {
+      iv: '-',
+      dbiv: '-',
+      cdd: '-',
+      dbcdd: '-',
+      revenue: '-',
+      net_revenue: '-',
+      pjt: '-',
+      cr: '-'
+    };
+  };
+
+  // Get all unique months from all clients' data and sort them
+  const getAllMonths = useCallback(() => {
+    const monthsSet = new Set<string>();
+    Object.values(statsData).forEach(clientStats => {
+      if (clientStats && clientStats.monthly_data) {
+        clientStats.monthly_data.forEach(monthData => {
+          if (monthData && monthData.month) {
+            monthsSet.add(monthData.month);
+          }
+        });
+      }
+    });
+    return Array.from(monthsSet).sort((a, b) => {
+      if (!a || !b) return 0;
+      return b.localeCompare(a);
+    }); // Sort in descending order
+  }, [statsData]);
+
+  // Format month display
+  const formatMonthDisplay = (monthStr: string | null) => {
+    if (!monthStr) return 'YTD';
+    const year = monthStr.substring(0, 4);
+    const month = monthStr.substring(4, 6);
+    return `${year}${month}`;
+  };
+
+  // Get stats for a specific month and client
+  const getMonthStats = (clientCode: string, month: string) => {
+    const clientStats = statsData[clientCode];
+    if (!clientStats || !clientStats.monthly_data) return null;
+
+    const monthData = clientStats.monthly_data.find(data => data?.month === month);
+    return monthData?.stats || null;
+  };
+
+  // Get YTD stats for a client
+  const getYTDStats = (clientCode: string) => {
+    return statsData[clientCode]?.ytd_totals?.stats || null;
+  };
+
+  // Function to get alternating background colors for monthly tables
+  const getMonthlyTableBgColor = (index: number) => {
+    // Alternate between three very subtle background colors
+    switch (index % 3) {
+      case 0:
+        return 'bg-muted/5';
+      case 1:
+        return 'bg-muted/10';
+      case 2:
+        return 'bg-muted/15';
+      default:
+        return '';
+    }
+  };
+
+  // Function to format number as integer
+  const formatNumber = (num: number | null | undefined) => {
+    if (num === null || num === undefined) return '-';
+    return Math.round(num).toLocaleString();
   };
 
   if (loading) {
@@ -221,6 +333,11 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
               <table className="w-full">
                 <thead>
                   <tr className="text-left bg-muted">
+                    <th colSpan={6} className="p-1.5 text-xs font-medium text-center">
+                      Client Information
+                    </th>
+                  </tr>
+                  <tr className="text-left bg-muted">
                     <th className="p-1.5 whitespace-nowrap text-xs font-medium">Client Code</th>
                     <th className="p-1.5 whitespace-nowrap text-xs font-medium">Geo</th>
                     <th className="p-1.5 whitespace-nowrap text-xs font-medium">Segment</th>
@@ -271,11 +388,57 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
               </table>
             </div>
 
-            <div className="flex-1 overflow-hidden">
-              <div className="overflow-x-auto bg-muted/10">
+            <div className="flex-1 overflow-hidden relative">
+              <div className="overflow-x-auto">
                 <div className="flex min-w-[1200px]">
-                  <table className="border-r">
+                  {/* Monthly tables */}
+                  {getAllMonths().map((month, index) => (
+                    <table key={month} className={`border-r ${getMonthlyTableBgColor(index)}`}>
+                      <thead>
+                        <tr className="text-left bg-muted">
+                          <th colSpan={8} className="p-1.5 text-xs font-medium text-center">
+                            {formatMonthDisplay(month)}
+                          </th>
+                        </tr>
+                        <tr className="text-left bg-muted">
+                          <th className="p-1.5 whitespace-nowrap text-xs font-medium">PJT</th>
+                          <th className="p-1.5 whitespace-nowrap text-xs font-medium">CR</th>
+                          <th className="p-1.5 whitespace-nowrap text-xs font-medium">CDD</th>
+                          <th className="p-1.5 whitespace-nowrap text-xs font-medium">DBC</th>
+                          <th className="p-1.5 whitespace-nowrap text-xs font-medium">IV</th>
+                          <th className="p-1.5 whitespace-nowrap text-xs font-medium">DBI</th>
+                          <th className="p-1.5 whitespace-nowrap text-xs font-medium">Rev</th>
+                          <th className="p-1.5 whitespace-nowrap text-xs font-medium">NR</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {data.map((item) => {
+                          const monthStats = getMonthStats(item.client_code_name, month);
+                          return (
+                            <tr key={item.id} className="border-b hover:bg-muted/50">
+                              <td className="p-1.5 text-xs">{monthStats?.pjt || '-'}</td>
+                              <td className="p-1.5 text-xs">{monthStats?.cr || '-'}</td>
+                              <td className="p-1.5 text-xs">{monthStats?.cdd || '-'}</td>
+                              <td className="p-1.5 text-xs">{monthStats?.dbcdd || '-'}</td>
+                              <td className="p-1.5 text-xs">{monthStats?.iv || '-'}</td>
+                              <td className="p-1.5 text-xs">{monthStats?.dbiv || '-'}</td>
+                              <td className="p-1.5 text-xs">{formatNumber(monthStats?.revenue)}</td>
+                              <td className="p-1.5 text-xs">{formatNumber(monthStats?.net_revenue)}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  ))}
+
+                  {/* YTD table */}
+                  <table className="border-r bg-muted/20">
                     <thead>
+                      <tr className="text-left bg-muted">
+                        <th colSpan={8} className="p-1.5 text-xs font-medium text-center">
+                          YTD
+                        </th>
+                      </tr>
                       <tr className="text-left bg-muted">
                         <th className="p-1.5 whitespace-nowrap text-xs font-medium">PJT</th>
                         <th className="p-1.5 whitespace-nowrap text-xs font-medium">CR</th>
@@ -288,186 +451,35 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
                       </tr>
                     </thead>
                     <tbody>
-                      {data.map((item) => (
-                        <tr 
-                          key={item.id}
-                          className="border-b hover:bg-muted/50"
-                        >
-                          <td className="p-1.5 text-xs">-</td>
-                          <td className="p-1.5 text-xs">-</td>
-                          <td className="p-1.5 text-xs">-</td>
-                          <td className="p-1.5 text-xs">-</td>
-                          <td className="p-1.5 text-xs">-</td>
-                          <td className="p-1.5 text-xs">-</td>
-                          <td className="p-1.5 text-xs">-</td>
-                          <td className="p-1.5 text-xs">-</td>
-                        </tr>
-                      ))}
+                      {data.map((item) => {
+                        const ytdStats = getYTDStats(item.client_code_name);
+                        return (
+                          <tr key={item.id} className="border-b hover:bg-muted/50">
+                            <td className="p-1.5 text-xs">{ytdStats?.pjt || '-'}</td>
+                            <td className="p-1.5 text-xs">{ytdStats?.cr || '-'}</td>
+                            <td className="p-1.5 text-xs">{ytdStats?.cdd || '-'}</td>
+                            <td className="p-1.5 text-xs">{ytdStats?.dbcdd || '-'}</td>
+                            <td className="p-1.5 text-xs">{ytdStats?.iv || '-'}</td>
+                            <td className="p-1.5 text-xs">{ytdStats?.dbiv || '-'}</td>
+                            <td className="p-1.5 text-xs">{formatNumber(ytdStats?.revenue)}</td>
+                            <td className="p-1.5 text-xs">{formatNumber(ytdStats?.net_revenue)}</td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
-
-                  <table className="border-r">
-                    <thead>
-                      <tr className="text-left bg-muted">
-                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">PJT</th>
-                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">CR</th>
-                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">CDD</th>
-                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">DBC</th>
-                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">IV</th>
-                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">DBI</th>
-                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">Rev</th>
-                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">NR</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {data.map((item) => (
-                        <tr 
-                          key={item.id}
-                          className="border-b hover:bg-muted/50"
-                        >
-                          <td className="p-1.5 text-xs">-</td>
-                          <td className="p-1.5 text-xs">-</td>
-                          <td className="p-1.5 text-xs">-</td>
-                          <td className="p-1.5 text-xs">-</td>
-                          <td className="p-1.5 text-xs">-</td>
-                          <td className="p-1.5 text-xs">-</td>
-                          <td className="p-1.5 text-xs">-</td>
-                          <td className="p-1.5 text-xs">-</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-
-                  <table className="border-r">
-                    <thead>
-                      <tr className="text-left bg-muted">
-                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">PJT</th>
-                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">CR</th>
-                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">CDD</th>
-                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">DBC</th>
-                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">IV</th>
-                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">DBI</th>
-                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">Rev</th>
-                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">NR</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {data.map((item) => (
-                        <tr 
-                          key={item.id}
-                          className="border-b hover:bg-muted/50"
-                        >
-                          <td className="p-1.5 text-xs">-</td>
-                          <td className="p-1.5 text-xs">-</td>
-                          <td className="p-1.5 text-xs">-</td>
-                          <td className="p-1.5 text-xs">-</td>
-                          <td className="p-1.5 text-xs">-</td>
-                          <td className="p-1.5 text-xs">-</td>
-                          <td className="p-1.5 text-xs">-</td>
-                          <td className="p-1.5 text-xs">-</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-
-                  <table className="border-r">
-                    <thead>
-                      <tr className="text-left bg-muted">
-                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">PJT</th>
-                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">CR</th>
-                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">CDD</th>
-                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">DBC</th>
-                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">IV</th>
-                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">DBI</th>
-                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">Rev</th>
-                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">NR</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {data.map((item) => (
-                        <tr 
-                          key={item.id}
-                          className="border-b hover:bg-muted/50"
-                        >
-                          <td className="p-1.5 text-xs">-</td>
-                          <td className="p-1.5 text-xs">-</td>
-                          <td className="p-1.5 text-xs">-</td>
-                          <td className="p-1.5 text-xs">-</td>
-                          <td className="p-1.5 text-xs">-</td>
-                          <td className="p-1.5 text-xs">-</td>
-                          <td className="p-1.5 text-xs">-</td>
-                          <td className="p-1.5 text-xs">-</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-
-                  <table className="border-r">
-                    <thead>
-                      <tr className="text-left bg-muted">
-                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">PJT</th>
-                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">CR</th>
-                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">CDD</th>
-                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">DBC</th>
-                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">IV</th>
-                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">DBI</th>
-                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">Rev</th>
-                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">NR</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {data.map((item) => (
-                        <tr 
-                          key={item.id}
-                          className="border-b hover:bg-muted/50"
-                        >
-                          <td className="p-1.5 text-xs">-</td>
-                          <td className="p-1.5 text-xs">-</td>
-                          <td className="p-1.5 text-xs">-</td>
-                          <td className="p-1.5 text-xs">-</td>
-                          <td className="p-1.5 text-xs">-</td>
-                          <td className="p-1.5 text-xs">-</td>
-                          <td className="p-1.5 text-xs">-</td>
-                          <td className="p-1.5 text-xs">-</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-
-                  <table className="border-r">
-                    <thead>
-                      <tr className="text-left bg-muted">
-                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">PJT</th>
-                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">CR</th>
-                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">CDD</th>
-                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">DBC</th>
-                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">IV</th>
-                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">DBI</th>
-                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">Rev</th>
-                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">NR</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {data.map((item) => (
-                        <tr 
-                          key={item.id}
-                          className="border-b hover:bg-muted/50"
-                        >
-                          <td className="p-1.5 text-xs">-</td>
-                          <td className="p-1.5 text-xs">-</td>
-                          <td className="p-1.5 text-xs">-</td>
-                          <td className="p-1.5 text-xs">-</td>
-                          <td className="p-1.5 text-xs">-</td>
-                          <td className="p-1.5 text-xs">-</td>
-                          <td className="p-1.5 text-xs">-</td>
-                          <td className="p-1.5 text-xs">-</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-
                 </div>
               </div>
+
+              {/* Loading overlay for stats */}
+              {statsLoading && (
+                <div className="absolute inset-0 bg-background/50 flex items-center justify-center backdrop-blur-[1px]">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <div className="text-sm text-muted-foreground">Loading stats...</div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
