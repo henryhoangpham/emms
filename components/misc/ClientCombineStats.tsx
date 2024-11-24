@@ -416,14 +416,14 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
                           const monthStats = getMonthStats(item.client_code_name, month);
                           return (
                             <tr key={item.id} className="border-b hover:bg-muted/50">
-                              <td className="p-1.5 text-xs">{monthStats?.pjt || '-'}</td>
-                              <td className="p-1.5 text-xs">{monthStats?.cr || '-'}</td>
-                              <td className="p-1.5 text-xs">{monthStats?.cdd || '-'}</td>
-                              <td className="p-1.5 text-xs">{monthStats?.dbcdd || '-'}</td>
-                              <td className="p-1.5 text-xs">{monthStats?.iv || '-'}</td>
-                              <td className="p-1.5 text-xs">{monthStats?.dbiv || '-'}</td>
-                              <td className="p-1.5 text-xs">{formatNumber(monthStats?.revenue)}</td>
-                              <td className="p-1.5 text-xs">{formatNumber(monthStats?.net_revenue)}</td>
+                              <td className="p-1.5 text-xs text-right">{monthStats?.pjt || '-'}</td>
+                              <td className="p-1.5 text-xs text-right">{monthStats?.cr || '-'}</td>
+                              <td className="p-1.5 text-xs text-right">{monthStats?.cdd || '-'}</td>
+                              <td className="p-1.5 text-xs text-right">{monthStats?.dbcdd || '-'}</td>
+                              <td className="p-1.5 text-xs text-right">{monthStats?.iv || '-'}</td>
+                              <td className="p-1.5 text-xs text-right">{monthStats?.dbiv || '-'}</td>
+                              <td className="p-1.5 text-xs text-right">{formatNumber(monthStats?.revenue)}</td>
+                              <td className="p-1.5 text-xs text-right">{formatNumber(monthStats?.net_revenue)}</td>
                             </tr>
                           );
                         })}
@@ -455,14 +455,14 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
                         const ytdStats = getYTDStats(item.client_code_name);
                         return (
                           <tr key={item.id} className="border-b hover:bg-muted/50">
-                            <td className="p-1.5 text-xs">{ytdStats?.pjt || '-'}</td>
-                            <td className="p-1.5 text-xs">{ytdStats?.cr || '-'}</td>
-                            <td className="p-1.5 text-xs">{ytdStats?.cdd || '-'}</td>
-                            <td className="p-1.5 text-xs">{ytdStats?.dbcdd || '-'}</td>
-                            <td className="p-1.5 text-xs">{ytdStats?.iv || '-'}</td>
-                            <td className="p-1.5 text-xs">{ytdStats?.dbiv || '-'}</td>
-                            <td className="p-1.5 text-xs">{formatNumber(ytdStats?.revenue)}</td>
-                            <td className="p-1.5 text-xs">{formatNumber(ytdStats?.net_revenue)}</td>
+                            <td className="p-1.5 text-xs text-right">{ytdStats?.pjt || '-'}</td>
+                            <td className="p-1.5 text-xs text-right">{ytdStats?.cr || '-'}</td>
+                            <td className="p-1.5 text-xs text-right">{ytdStats?.cdd || '-'}</td>
+                            <td className="p-1.5 text-xs text-right">{ytdStats?.dbcdd || '-'}</td>
+                            <td className="p-1.5 text-xs text-right">{ytdStats?.iv || '-'}</td>
+                            <td className="p-1.5 text-xs text-right">{ytdStats?.dbiv || '-'}</td>
+                            <td className="p-1.5 text-xs text-right">{formatNumber(ytdStats?.revenue)}</td>
+                            <td className="p-1.5 text-xs text-right">{formatNumber(ytdStats?.net_revenue)}</td>
                           </tr>
                         );
                       })}

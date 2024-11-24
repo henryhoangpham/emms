@@ -228,12 +228,17 @@ export default function OperationalClientList({ user }: OperationalClientListPro
               <thead>
                 <tr className="text-left bg-muted">
                   <th className="p-2 whitespace-nowrap">Client Code</th>
+                  <th className="p-2 whitespace-nowrap">Client Name</th>
+                  <th className="p-2 whitespace-nowrap">Client ID</th>
                   <th className="p-2 whitespace-nowrap">Contract Type</th>
                   <th className="p-2 whitespace-nowrap">Country</th>
                   <th className="p-2 whitespace-nowrap">Company Segment</th>
                   <th className="p-2 whitespace-nowrap">Priority</th>
                   <th className="p-2 whitespace-nowrap">AM</th>
-                  <th className="p-2 whitespace-nowrap">Client Facing</th>
+                  <th className="p-2 whitespace-nowrap">PM</th>
+                  <th className="p-2 whitespace-nowrap">CF</th>
+                  <th className="p-2 whitespace-nowrap">Invoice Entity</th>
+                  <th className="p-2 whitespace-nowrap">Invoice Currency</th>
                 </tr>
               </thead>
               <tbody>
@@ -243,6 +248,8 @@ export default function OperationalClientList({ user }: OperationalClientListPro
                     className="border-b hover:bg-muted/50"
                   >
                     <td className="p-2 whitespace-nowrap">{item.client_code_name || '-'}</td>
+                    <td className="p-2 whitespace-nowrap">{item.company_name || '-'}</td>
+                    <td className="p-2 whitespace-nowrap">{item.client_id || '-'}</td>
                     <td className="p-2 whitespace-nowrap">{item.contract_type || '-'}</td>
                     <td className="p-2 whitespace-nowrap">{item.country_code || '-'}</td>
                     <td className="p-2 whitespace-nowrap">{item.company_segment || '-'}</td>
@@ -250,7 +257,10 @@ export default function OperationalClientList({ user }: OperationalClientListPro
                       {item.existing_account_priority || '-'}
                     </td>
                     <td className="p-2 whitespace-nowrap">{item.am || '-'}</td>
+                    <td className="p-2 whitespace-nowrap">{item.pm || '-'}</td>
                     <td className="p-2 whitespace-nowrap">{item.client_facing || '-'}</td>
+                    <td className="p-2 whitespace-nowrap">{item.invoice_entity || '-'}</td>
+                    <td className="p-2 whitespace-nowrap">{item.invoice_currency || '-'}</td>
                   </tr>
                 ))}
               </tbody>

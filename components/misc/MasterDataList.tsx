@@ -295,7 +295,7 @@ export default function MasterDataList({ user }: MasterDataListProps) {
               <Input
                 id="search"
                 ref={searchInputRef}
-                placeholder="Search PJT Code, Client, Recruiter, Expert Name..."
+                placeholder="Search PJT Code, Client, Recruiter, Expert Name, Position..."
                 value={searchTerm}
                 onChange={handleSearchChange}
                 className="w-full"

@@ -129,7 +129,7 @@ export function Sidebar({ onClose }: SidebarProps) {
             <Button 
               variant={pathname.startsWith('/master') ? "secondary" : "ghost"} 
               className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
-              title="Master Data"
+              title="Master Data 2024"
             >
               <Database className="h-4 w-4" />
               {isExpanded && <span className="ml-2">Master Data</span>}
@@ -149,7 +149,7 @@ export function Sidebar({ onClose }: SidebarProps) {
             <Button 
               variant={pathname.startsWith('/client-stats') ? "secondary" : "ghost"} 
               className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
-              title="Client Combine Stats"
+              title="Client Combine Stats 2024"
             >
               <BarChart className="h-4 w-4" />
               {isExpanded && <span className="ml-2">Client Stats</span>}
