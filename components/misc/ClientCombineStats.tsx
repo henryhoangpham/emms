@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
-import { Check, ChevronDown, X } from "lucide-react";
+import { Check, ChevronDown, X, RotateCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/utils/cn";
 import { Button } from '@/components/ui/button';
@@ -58,6 +58,7 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
   const statsAbortController = useRef<AbortController | null>(null);
   const [selectedPriorities, setSelectedPriorities] = useState<number[]>([]);
   const [prioritySearchOpen, setPrioritySearchOpen] = useState(false);
+  const [statsError, setStatsError] = useState(false);
 
   const fetchStats = useCallback(async (clientCodes: string[]) => {
     if (statsAbortController.current) {
@@ -68,6 +69,7 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
 
     try {
       setStatsLoading(true);
+      setStatsError(false);
       const stats = await getClientCombineStats(supabase, clientCodes);
       
       const statsRecord = stats.reduce((acc, stat) => {
@@ -80,18 +82,12 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
     } catch (error: any) {
       if (error.name === 'AbortError') {
         console.log('Request was aborted');
-      } else if (error.name === 'TimeoutError' || error.code === '504') {
-        console.error('Request timed out:', error);
-        toast({
-          title: 'Timeout Error',
-          description: 'The request took too long to complete. Please try again.',
-          variant: 'destructive',
-        });
       } else {
         console.error('Error fetching stats:', error);
+        setStatsError(true);
         toast({
           title: 'Warning',
-          description: 'Failed to load some statistics. The list will continue to display with partial data.',
+          description: 'Failed to load statistics. Click the retry button to try again.',
           variant: 'destructive',
         });
       }
@@ -299,7 +295,7 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
   return (
-    <div className="w-full">
+    <div className="w-full relative">
       <Card>
         <CardHeader className="py-4">
           <CardTitle className="text-base">Client Combine Stats</CardTitle>
@@ -589,6 +585,26 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
           />
         </CardContent>
       </Card>
+
+      {/* Retry button */}
+      {statsError && (
+        <div className="fixed bottom-40 right-4 z-50">
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-10 w-10 rounded-full bg-background shadow-lg hover:bg-muted"
+            onClick={() => {
+              const clientCodes = data.map(client => client.client_code_name);
+              if (clientCodes.length > 0) {
+                fetchStats(clientCodes);
+              }
+            }}
+            title="Retry loading stats"
+          >
+            <RotateCw className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 } 
