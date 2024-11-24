@@ -158,10 +158,10 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
   return (
-    <div className="container mx-auto">
+    <div className="w-full">
       <Card>
-        <CardHeader>
-          <CardTitle>Client Combine Stats</CardTitle>
+        <CardHeader className="py-4">
+          <CardTitle className="text-base">Client Combine Stats</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="mb-4 grid gap-4 grid-cols-1 md:grid-cols-2">
@@ -172,12 +172,12 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
                     value={invoiceEntity}
                     onValueChange={handleInvoiceEntityChange}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="text-sm">
                       <SelectValue placeholder="Invoice Entity" />
                     </SelectTrigger>
                     <SelectContent>
                       {INVOICE_ENTITIES.map((entity) => (
-                        <SelectItem key={entity} value={entity}>
+                        <SelectItem key={entity} value={entity} className="text-sm">
                           {entity}
                         </SelectItem>
                       ))}
@@ -190,12 +190,12 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
                     value={contractType}
                     onValueChange={handleContractTypeChange}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="text-sm">
                       <SelectValue placeholder="Contract Type" />
                     </SelectTrigger>
                     <SelectContent>
                       {CONTRACT_TYPES.map((type) => (
-                        <SelectItem key={type} value={type}>
+                        <SelectItem key={type} value={type} className="text-sm">
                           {type}
                         </SelectItem>
                       ))}
@@ -211,7 +211,7 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
                 placeholder="Search..."
                 value={searchTerm}
                 onChange={handleSearchChange}
-                className="w-full"
+                className="w-full text-sm"
               />
             </div>
           </div>
@@ -221,12 +221,12 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
               <table className="w-full">
                 <thead>
                   <tr className="text-left bg-muted">
-                    <th className="p-2 w-30">Client Code</th>
-                    <th className="p-2 w-15">Geo</th>
-                    <th className="p-2 w-30">Segment</th>
-                    <th className="p-2 w-12">P</th>
-                    <th className="p-2 w-25">AM</th>
-                    <th className="p-2 w-25">CF</th>
+                    <th className="p-1.5 whitespace-nowrap text-xs font-medium">Client Code</th>
+                    <th className="p-1.5 whitespace-nowrap text-xs font-medium">Geo</th>
+                    <th className="p-1.5 whitespace-nowrap text-xs font-medium">Segment</th>
+                    <th className="p-1.5 whitespace-nowrap text-xs font-medium">P</th>
+                    <th className="p-1.5 whitespace-nowrap text-xs font-medium">AM</th>
+                    <th className="p-1.5 whitespace-nowrap text-xs font-medium">CF</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -235,33 +235,33 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
                       key={item.id}
                       className="border-b hover:bg-muted/50"
                     >
-                      <td className="p-2">
-                        <div className="truncate max-w-[120px]" title={item.client_code_name || '-'}>
+                      <td className="p-1.5">
+                        <div className="truncate max-w-[120px] text-xs" title={item.client_code_name || '-'}>
                           {item.client_code_name || '-'}
                         </div>
                       </td>
-                      <td className="p-2">
-                        <div className="truncate max-w-[60px]" title={item.country_code || '-'}>
+                      <td className="p-1.5">
+                        <div className="truncate max-w-[60px] text-xs" title={item.country_code || '-'}>
                           {item.country_code || '-'}
                         </div>
                       </td>
-                      <td className="p-2">
-                        <div className="truncate max-w-[120px]" title={item.company_segment || '-'}>
+                      <td className="p-1.5">
+                        <div className="truncate max-w-[120px] text-xs" title={item.company_segment || '-'}>
                           {item.company_segment || '-'}
                         </div>
                       </td>
-                      <td className={`p-2 ${getPriorityColor(item.existing_account_priority)}`}>
-                        <div className="truncate max-w-[48px]" title={item.existing_account_priority?.toString() || '-'}>
+                      <td className={`p-1.5 ${getPriorityColor(item.existing_account_priority)}`}>
+                        <div className="truncate max-w-[48px] text-xs" title={item.existing_account_priority?.toString() || '-'}>
                           {item.existing_account_priority || '-'}
                         </div>
                       </td>
-                      <td className="p-2">
-                        <div className="truncate max-w-[100px]" title={item.am || '-'}>
+                      <td className="p-1.5">
+                        <div className="truncate max-w-[100px] text-xs" title={item.am || '-'}>
                           {item.am || '-'}
                         </div>
                       </td>
-                      <td className="p-2">
-                        <div className="truncate max-w-[100px]" title={item.client_facing || '-'}>
+                      <td className="p-1.5">
+                        <div className="truncate max-w-[100px] text-xs" title={item.client_facing || '-'}>
                           {item.client_facing || '-'}
                         </div>
                       </td>
@@ -277,14 +277,14 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
                   <table className="border-r">
                     <thead>
                       <tr className="text-left bg-muted">
-                        <th className="p-2 w-8">PJT</th>
-                        <th className="p-2 w-8">CR</th>
-                        <th className="p-2 w-8">CDD</th>
-                        <th className="p-2 w-8">DBCDD</th>
-                        <th className="p-2 w-8">IV</th>
-                        <th className="p-2 w-8">DBIV</th>
-                        <th className="p-2 w-24">Rev</th>
-                        <th className="p-2 w-24">NR</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">PJT</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">CR</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">CDD</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">DBC</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">IV</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">DBI</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">Rev</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">NR</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -293,14 +293,14 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
                           key={item.id}
                           className="border-b hover:bg-muted/50"
                         >
-                          <td className="p-2">-</td>
-                          <td className="p-2">-</td>
-                          <td className="p-2">-</td>
-                          <td className="p-2">-</td>
-                          <td className="p-2">-</td>
-                          <td className="p-2">-</td>
-                          <td className="p-2">-</td>
-                          <td className="p-2">-</td>
+                          <td className="p-1.5 text-xs">-</td>
+                          <td className="p-1.5 text-xs">-</td>
+                          <td className="p-1.5 text-xs">-</td>
+                          <td className="p-1.5 text-xs">-</td>
+                          <td className="p-1.5 text-xs">-</td>
+                          <td className="p-1.5 text-xs">-</td>
+                          <td className="p-1.5 text-xs">-</td>
+                          <td className="p-1.5 text-xs">-</td>
                         </tr>
                       ))}
                     </tbody>
@@ -309,14 +309,14 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
                   <table className="border-r">
                     <thead>
                       <tr className="text-left bg-muted">
-                        <th className="p-2 w-8">PJT</th>
-                        <th className="p-2 w-8">CR</th>
-                        <th className="p-2 w-8">CDD</th>
-                        <th className="p-2 w-8">DBCDD</th>
-                        <th className="p-2 w-8">IV</th>
-                        <th className="p-2 w-8">DBIV</th>
-                        <th className="p-2 w-24">Rev</th>
-                        <th className="p-2 w-24">NR</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">PJT</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">CR</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">CDD</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">DBC</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">IV</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">DBI</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">Rev</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">NR</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -325,14 +325,14 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
                           key={item.id}
                           className="border-b hover:bg-muted/50"
                         >
-                          <td className="p-2">-</td>
-                          <td className="p-2">-</td>
-                          <td className="p-2">-</td>
-                          <td className="p-2">-</td>
-                          <td className="p-2">-</td>
-                          <td className="p-2">-</td>
-                          <td className="p-2">-</td>
-                          <td className="p-2">-</td>
+                          <td className="p-1.5 text-xs">-</td>
+                          <td className="p-1.5 text-xs">-</td>
+                          <td className="p-1.5 text-xs">-</td>
+                          <td className="p-1.5 text-xs">-</td>
+                          <td className="p-1.5 text-xs">-</td>
+                          <td className="p-1.5 text-xs">-</td>
+                          <td className="p-1.5 text-xs">-</td>
+                          <td className="p-1.5 text-xs">-</td>
                         </tr>
                       ))}
                     </tbody>
@@ -341,14 +341,14 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
                   <table className="border-r">
                     <thead>
                       <tr className="text-left bg-muted">
-                        <th className="p-2 w-8">PJT</th>
-                        <th className="p-2 w-8">CR</th>
-                        <th className="p-2 w-8">CDD</th>
-                        <th className="p-2 w-8">DBCDD</th>
-                        <th className="p-2 w-8">IV</th>
-                        <th className="p-2 w-8">DBIV</th>
-                        <th className="p-2 w-24">Rev</th>
-                        <th className="p-2 w-24">NR</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">PJT</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">CR</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">CDD</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">DBC</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">IV</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">DBI</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">Rev</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">NR</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -357,14 +357,14 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
                           key={item.id}
                           className="border-b hover:bg-muted/50"
                         >
-                          <td className="p-2">-</td>
-                          <td className="p-2">-</td>
-                          <td className="p-2">-</td>
-                          <td className="p-2">-</td>
-                          <td className="p-2">-</td>
-                          <td className="p-2">-</td>
-                          <td className="p-2">-</td>
-                          <td className="p-2">-</td>
+                          <td className="p-1.5 text-xs">-</td>
+                          <td className="p-1.5 text-xs">-</td>
+                          <td className="p-1.5 text-xs">-</td>
+                          <td className="p-1.5 text-xs">-</td>
+                          <td className="p-1.5 text-xs">-</td>
+                          <td className="p-1.5 text-xs">-</td>
+                          <td className="p-1.5 text-xs">-</td>
+                          <td className="p-1.5 text-xs">-</td>
                         </tr>
                       ))}
                     </tbody>
@@ -373,14 +373,14 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
                   <table className="border-r">
                     <thead>
                       <tr className="text-left bg-muted">
-                        <th className="p-2 w-8">PJT</th>
-                        <th className="p-2 w-8">CR</th>
-                        <th className="p-2 w-8">CDD</th>
-                        <th className="p-2 w-8">DBCDD</th>
-                        <th className="p-2 w-8">IV</th>
-                        <th className="p-2 w-8">DBIV</th>
-                        <th className="p-2 w-24">Rev</th>
-                        <th className="p-2 w-24">NR</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">PJT</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">CR</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">CDD</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">DBC</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">IV</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">DBI</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">Rev</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">NR</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -389,14 +389,14 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
                           key={item.id}
                           className="border-b hover:bg-muted/50"
                         >
-                          <td className="p-2">-</td>
-                          <td className="p-2">-</td>
-                          <td className="p-2">-</td>
-                          <td className="p-2">-</td>
-                          <td className="p-2">-</td>
-                          <td className="p-2">-</td>
-                          <td className="p-2">-</td>
-                          <td className="p-2">-</td>
+                          <td className="p-1.5 text-xs">-</td>
+                          <td className="p-1.5 text-xs">-</td>
+                          <td className="p-1.5 text-xs">-</td>
+                          <td className="p-1.5 text-xs">-</td>
+                          <td className="p-1.5 text-xs">-</td>
+                          <td className="p-1.5 text-xs">-</td>
+                          <td className="p-1.5 text-xs">-</td>
+                          <td className="p-1.5 text-xs">-</td>
                         </tr>
                       ))}
                     </tbody>
@@ -405,14 +405,14 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
                   <table className="border-r">
                     <thead>
                       <tr className="text-left bg-muted">
-                        <th className="p-2 w-8">PJT</th>
-                        <th className="p-2 w-8">CR</th>
-                        <th className="p-2 w-8">CDD</th>
-                        <th className="p-2 w-8">DBCDD</th>
-                        <th className="p-2 w-8">IV</th>
-                        <th className="p-2 w-8">DBIV</th>
-                        <th className="p-2 w-24">Rev</th>
-                        <th className="p-2 w-24">NR</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">PJT</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">CR</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">CDD</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">DBC</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">IV</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">DBI</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">Rev</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">NR</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -421,14 +421,14 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
                           key={item.id}
                           className="border-b hover:bg-muted/50"
                         >
-                          <td className="p-2">-</td>
-                          <td className="p-2">-</td>
-                          <td className="p-2">-</td>
-                          <td className="p-2">-</td>
-                          <td className="p-2">-</td>
-                          <td className="p-2">-</td>
-                          <td className="p-2">-</td>
-                          <td className="p-2">-</td>
+                          <td className="p-1.5 text-xs">-</td>
+                          <td className="p-1.5 text-xs">-</td>
+                          <td className="p-1.5 text-xs">-</td>
+                          <td className="p-1.5 text-xs">-</td>
+                          <td className="p-1.5 text-xs">-</td>
+                          <td className="p-1.5 text-xs">-</td>
+                          <td className="p-1.5 text-xs">-</td>
+                          <td className="p-1.5 text-xs">-</td>
                         </tr>
                       ))}
                     </tbody>
@@ -437,14 +437,14 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
                   <table className="border-r">
                     <thead>
                       <tr className="text-left bg-muted">
-                        <th className="p-2 w-8">PJT</th>
-                        <th className="p-2 w-8">CR</th>
-                        <th className="p-2 w-8">CDD</th>
-                        <th className="p-2 w-8">DBCDD</th>
-                        <th className="p-2 w-8">IV</th>
-                        <th className="p-2 w-8">DBIV</th>
-                        <th className="p-2 w-24">Rev</th>
-                        <th className="p-2 w-24">NR</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">PJT</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">CR</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">CDD</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">DBC</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">IV</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">DBI</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">Rev</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">NR</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -453,14 +453,14 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
                           key={item.id}
                           className="border-b hover:bg-muted/50"
                         >
-                          <td className="p-2">-</td>
-                          <td className="p-2">-</td>
-                          <td className="p-2">-</td>
-                          <td className="p-2">-</td>
-                          <td className="p-2">-</td>
-                          <td className="p-2">-</td>
-                          <td className="p-2">-</td>
-                          <td className="p-2">-</td>
+                          <td className="p-1.5 text-xs">-</td>
+                          <td className="p-1.5 text-xs">-</td>
+                          <td className="p-1.5 text-xs">-</td>
+                          <td className="p-1.5 text-xs">-</td>
+                          <td className="p-1.5 text-xs">-</td>
+                          <td className="p-1.5 text-xs">-</td>
+                          <td className="p-1.5 text-xs">-</td>
+                          <td className="p-1.5 text-xs">-</td>
                         </tr>
                       ))}
                     </tbody>

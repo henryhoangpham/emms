@@ -192,7 +192,7 @@ export default function MasterDataList({ user }: MasterDataListProps) {
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
   return (
-    <div className="container mx-auto">
+    <div className="w-full">
       <Card>
         <CardHeader>
           <CardTitle>Master Data List</CardTitle>

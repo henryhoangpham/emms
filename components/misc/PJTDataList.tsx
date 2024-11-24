@@ -207,7 +207,7 @@ export default function PJTDataList({ user }: PJTDataListProps) {
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
   return (
-    <div className="container mx-auto">
+    <div className="w-full">
       <Card>
         <CardHeader>
           <CardTitle>PJT Data List</CardTitle>

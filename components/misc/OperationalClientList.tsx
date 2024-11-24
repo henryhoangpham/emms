@@ -159,7 +159,7 @@ export default function OperationalClientList({ user }: OperationalClientListPro
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
   return (
-    <div className="container mx-auto">
+    <div className="w-full">
       <Card>
         <CardHeader>
           <CardTitle>Operational Clients</CardTitle>
