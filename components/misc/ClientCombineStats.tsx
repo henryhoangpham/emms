@@ -320,7 +320,7 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
             <div className="order-2">
               <Input
                 ref={searchInputRef}
-                placeholder="Search..."
+                placeholder="Search Client Code, Client, Client ID..."
                 value={searchTerm}
                 onChange={handleSearchChange}
                 className="w-full text-sm"
@@ -353,7 +353,7 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
                       className="border-b hover:bg-muted/50"
                     >
                       <td className="p-1.5">
-                        <div className="truncate max-w-[120px] text-xs" title={item.client_code_name || '-'}>
+                        <div className="truncate max-w-[180px] text-xs" title={item.client_code_name || '-'}>
                           {item.client_code_name || '-'}
                         </div>
                       </td>

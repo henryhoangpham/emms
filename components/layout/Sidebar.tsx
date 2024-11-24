@@ -149,7 +149,7 @@ export function Sidebar({ onClose }: SidebarProps) {
             <Button 
               variant={pathname.startsWith('/client-stats') ? "secondary" : "ghost"} 
               className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
-              title="Client Stats"
+              title="Client Combine Stats"
             >
               <BarChart className="h-4 w-4" />
               {isExpanded && <span className="ml-2">Client Stats</span>}

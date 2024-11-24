@@ -12,6 +12,7 @@ import { DEFAULT_ITEMS_PER_PAGE } from '@/utils/constants';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TableWrapper } from '@/components/ui/table-wrapper';
+import { Label } from '@/components/ui/label';
 
 const INVOICE_ENTITIES = [
   'All',
@@ -170,6 +171,7 @@ export default function OperationalClientList({ user }: OperationalClientListPro
             <div className="order-1">
               <div className="flex gap-4">
                 <div className="flex-1">
+                  <Label>Invoice Entity</Label>
                   <Select
                     value={invoiceEntity}
                     onValueChange={handleInvoiceEntityChange}
@@ -188,6 +190,7 @@ export default function OperationalClientList({ user }: OperationalClientListPro
                 </div>
 
                 <div className="flex-1">
+                  <Label>Contract Type</Label>
                   <Select
                     value={contractType}
                     onValueChange={handleContractTypeChange}
@@ -209,9 +212,10 @@ export default function OperationalClientList({ user }: OperationalClientListPro
 
             {/* Search box */}
             <div className="order-2">
+              <Label>Search</Label>
               <Input
                 ref={searchInputRef}
-                placeholder="Search..."
+                placeholder="Search Client Code, Client, Client ID..."
                 value={searchTerm}
                 onChange={handleSearchChange}
                 className="w-full"

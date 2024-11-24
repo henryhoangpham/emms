@@ -295,7 +295,7 @@ export default function MasterDataList({ user }: MasterDataListProps) {
               <Input
                 id="search"
                 ref={searchInputRef}
-                placeholder="Search..."
+                placeholder="Search PJT Code, Client, Recruiter, Expert Name..."
                 value={searchTerm}
                 onChange={handleSearchChange}
                 className="w-full"
@@ -317,6 +317,7 @@ export default function MasterDataList({ user }: MasterDataListProps) {
                   <th className="p-2 whitespace-nowrap">USD Expert Fee</th>
                   <th className="p-2 whitespace-nowrap">USD Client Fee</th>
                   <th className="p-2 whitespace-nowrap">USD Net Revenue</th>
+                  <th className="p-2 whitespace-nowrap">Recruiter</th>
                   <th className="p-2 whitespace-nowrap">Expert Name</th>
                   <th className="p-2 whitespace-nowrap">Position</th>
                 </tr>
@@ -354,6 +355,7 @@ export default function MasterDataList({ user }: MasterDataListProps) {
                         ? `${item.usd_actual_net_revenue.toFixed(2)}` 
                         : '-'}
                     </td>
+                    <td className="p-2 max-w-md break-words">{item.recruiter || '-'}</td>
                     <td className="p-2 max-w-md break-words">{item.name || '-'}</td>
                     <td className="p-2 whitespace-nowrap">{item.position || '-'}</td>
                   </tr>

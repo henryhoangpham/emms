@@ -18,6 +18,7 @@ import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem } from "
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/utils/cn";
 import { TableWrapper } from '@/components/ui/table-wrapper';
+import { Label } from "@/components/ui/label";
 
 const CONTRACT_TYPES = [
   'All',
@@ -218,6 +219,7 @@ export default function PJTDataList({ user }: PJTDataListProps) {
             <div className="order-1">
               <div className="flex gap-4">
                 <div className="flex-1">
+                  <Label>Contract Type</Label>
                   <Select
                     value={contractType}
                     onValueChange={handleContractTypeChange}
@@ -236,6 +238,7 @@ export default function PJTDataList({ user }: PJTDataListProps) {
                 </div>
 
                 <div className="flex-1">
+                  <Label>Status</Label>
                   <Popover open={statusSearchOpen} onOpenChange={setStatusSearchOpen}>
                     <PopoverTrigger asChild>
                       <Button
@@ -302,9 +305,10 @@ export default function PJTDataList({ user }: PJTDataListProps) {
 
             {/* Search box - spans half width on desktop */}
             <div className="order-2">
+              <Label>Search</Label>
               <Input
                 ref={searchInputRef}
-                placeholder="Search..."
+                placeholder="Search PJT Code, Topic, Client..."
                 value={searchTerm}
                 onChange={handleSearchChange}
                 className="w-full"
