@@ -868,7 +868,8 @@ export async function getOperationalClients(
   limit: number = 10,
   invoiceEntity: string = 'All',
   contractType: string = 'All',
-  searchString: string = ''
+  searchString: string = '',
+  priorities: number[] = []
 ) {
   const offset = (page - 1) * limit;
 
@@ -878,7 +879,8 @@ export async function getOperationalClients(
       p_offset: offset,
       p_invoice_entity: invoiceEntity,
       p_contract_type: contractType,
-      p_search_string: searchString
+      p_search_string: searchString,
+      p_priorities: priorities.length > 0 ? priorities : null
     });
 
   if (error) throw error;

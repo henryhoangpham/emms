@@ -11,6 +11,13 @@ import { Pagination } from '@/components/ui/pagination';
 import { DEFAULT_ITEMS_PER_PAGE } from '@/utils/constants';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
+import { Check, ChevronDown, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/utils/cn";
+import { Button } from '@/components/ui/button';
 
 const INVOICE_ENTITIES = [
   'All',
@@ -26,6 +33,8 @@ const CONTRACT_TYPES = [
   'Package',
   'Others'
 ] as const;
+
+const PRIORITY_OPTIONS = [5,4,3,2,1] as const;
 
 interface ClientCombineStatsProps {
   user: User;
@@ -47,6 +56,8 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
   const [statsLoading, setStatsLoading] = useState(false);
   const [statsData, setStatsData] = useState<Record<string, ClientCombineStatsResponse>>({});
   const statsAbortController = useRef<AbortController | null>(null);
+  const [selectedPriorities, setSelectedPriorities] = useState<number[]>([]);
+  const [prioritySearchOpen, setPrioritySearchOpen] = useState(false);
 
   const fetchStats = useCallback(async (clientCodes: string[]) => {
     if (statsAbortController.current) {
@@ -94,6 +105,7 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
     currentSearchTerm?: string,
     currentInvoiceEntity?: string,
     currentContractType?: string,
+    currentPriorities?: number[]
   ) => {
     try {
       setLoading(true);
@@ -104,7 +116,8 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
         itemsPerPage,
         currentInvoiceEntity ?? invoiceEntity,
         currentContractType ?? contractType,
-        currentSearchTerm ?? searchTerm
+        currentSearchTerm ?? searchTerm,
+        currentPriorities ?? selectedPriorities
       );
       
       if (operationalClients) {
@@ -126,25 +139,23 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
     } finally {
       setLoading(false);
     }
-  }, [supabase, currentPage, itemsPerPage, searchTerm, invoiceEntity, contractType, toast, fetchStats]);
+  }, [supabase, currentPage, itemsPerPage, searchTerm, invoiceEntity, contractType, selectedPriorities, toast, fetchStats]);
 
   const debouncedSearch = useCallback((
     fromSearchInput: boolean = false,
     newSearchTerm?: string,
     newInvoiceEntity?: string,
     newContractType?: string,
+    newPriorities?: number[]
   ) => {
     if (searchTimeoutRef.current) {
-      console.log('debouncedSearch: clearing timeout');
       clearTimeout(searchTimeoutRef.current);
     }
 
     searchTimeoutRef.current = setTimeout(() => {
-      console.log('debouncedSearch: executing search');
       setCurrentPage(1);
-      fetchData(true, newSearchTerm, newInvoiceEntity, newContractType);
+      fetchData(true, newSearchTerm, newInvoiceEntity, newContractType, newPriorities);
       if (fromSearchInput && searchInputRef.current) {
-        console.log('debouncedSearch: focusing search input');
         searchInputRef.current.focus();
       }
       searchTimeoutRef.current = undefined;
@@ -165,6 +176,24 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
   const handleContractTypeChange = (value: string) => {
     setContractType(value);
     debouncedSearch(false, searchTerm, invoiceEntity, value);
+  };
+
+  const handlePrioritySelect = (priority: number) => {
+    setSelectedPriorities(current => {
+      const newPriorities = current.includes(priority)
+        ? current.filter(p => p !== priority)
+        : [...current, priority];
+      debouncedSearch(false, searchTerm, invoiceEntity, contractType, newPriorities);
+      return newPriorities;
+    });
+  };
+
+  const removePriority = (priority: number) => {
+    setSelectedPriorities(current => {
+      const newPriorities = current.filter(p => p !== priority);
+      debouncedSearch(false, searchTerm, invoiceEntity, contractType, newPriorities);
+      return newPriorities;
+    });
   };
 
   useEffect(() => {
@@ -280,6 +309,7 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
             <div className="order-1">
               <div className="flex gap-4">
                 <div className="flex-1">
+                  <Label>Invoice Entity</Label>
                   <Select
                     value={invoiceEntity}
                     onValueChange={handleInvoiceEntityChange}
@@ -298,26 +328,92 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
                 </div>
 
                 <div className="flex-1">
+                  <Label>Contract Type</Label>
                   <Select
                     value={contractType}
                     onValueChange={handleContractTypeChange}
                   >
-                    <SelectTrigger className="text-sm">
+                    <SelectTrigger>
                       <SelectValue placeholder="Contract Type" />
                     </SelectTrigger>
                     <SelectContent>
                       {CONTRACT_TYPES.map((type) => (
-                        <SelectItem key={type} value={type} className="text-sm">
+                        <SelectItem key={type} value={type}>
                           {type}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
+
+                <div className="w-24">
+                  <Label>Priority</Label>
+                  <Popover open={prioritySearchOpen} onOpenChange={setPrioritySearchOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={prioritySearchOpen}
+                        className="w-full justify-between"
+                      >
+                        {selectedPriorities.length === 0 
+                          ? "All"
+                          : `${selectedPriorities.length}`}
+                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[200px] p-0">
+                      <Command>
+                        <CommandInput placeholder="Search priorities..." />
+                        <CommandEmpty>No priority found.</CommandEmpty>
+                        <CommandGroup className="max-h-64 overflow-auto">
+                          {PRIORITY_OPTIONS.map((priority) => (
+                            <CommandItem
+                              key={priority}
+                              value={priority.toString()}
+                              onSelect={() => handlePrioritySelect(priority)}
+                            >
+                              <div className="flex items-center gap-2">
+                                <div className={cn(
+                                  "h-4 w-4 border rounded-sm flex items-center justify-center",
+                                  selectedPriorities.includes(priority) ? "bg-primary border-primary" : "border-input"
+                                )}>
+                                  {selectedPriorities.includes(priority) && 
+                                    <Check className="h-3 w-3 text-primary-foreground" />
+                                  }
+                                </div>
+                                {priority}
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {selectedPriorities.map((priority) => (
+                      <Badge
+                        key={priority}
+                        variant="secondary"
+                        className="flex items-center gap-1"
+                      >
+                        {priority}
+                        <button
+                          type="button"
+                          className="ml-1 hover:bg-muted rounded-full"
+                          onClick={() => removePriority(priority)}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
 
             <div className="order-2">
+              <Label>Search</Label>
               <Input
                 ref={searchInputRef}
                 placeholder="Search Client Code, Client, Client ID..."
