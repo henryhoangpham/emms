@@ -752,9 +752,6 @@ interface MasterData {
   period_of_enrollment: string;
   position: string;
   linkedin: string;
-  fee_for_expert: number;
-  fee_from_client: number;
-  net_revenue: number;
   proposed_currency: string;
   duration: number;
   item_id: string;
@@ -763,6 +760,11 @@ interface MasterData {
   expert_billing_currency: string;
   monthly_id: string;
   total_count: number;
+  actual_expert_fee: number;
+  usd_actual_expert_fee: number;
+  usd_actual_client_fee: number;
+  usd_actual_net_revenue: number;
+  true_client: string;
 }
 
 export async function getMasterData(
@@ -809,6 +811,7 @@ interface PJTMasterData {
   inquiry_date: string;
   proposal_date: string;
   status: string;
+  required_nr_of_calls: number;
   total_count: number;
 }
 

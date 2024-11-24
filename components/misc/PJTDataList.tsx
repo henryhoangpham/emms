@@ -318,12 +318,13 @@ export default function PJTDataList({ user }: PJTDataListProps) {
               <thead>
                 <tr className="text-left bg-muted">
                   <th className="p-2 whitespace-nowrap">PJT Code</th>
+                  <th className="p-2 whitespace-nowrap">CR</th>
+                  <th className="p-2 whitespace-nowrap">Status</th>
                   <th className="p-2 whitespace-nowrap">Project Topic</th>
                   <th className="p-2 whitespace-nowrap">Client</th>
                   <th className="p-2 whitespace-nowrap">Client PIC</th>
                   <th className="p-2 whitespace-nowrap">Contract Type</th>
                   <th className="p-2 whitespace-nowrap">Inquiry Date</th>
-                  <th className="p-2 whitespace-nowrap">Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -333,6 +334,8 @@ export default function PJTDataList({ user }: PJTDataListProps) {
                     className="border-b hover:bg-muted/50"
                   >
                     <td className="p-2 whitespace-nowrap">{item.pjt_code || '-'}</td>
+                    <td className="p-2 whitespace-nowrap">{item.required_nr_of_calls || '-'}</td>
+                    <td className="p-2 whitespace-nowrap">{item.status || '-'}</td>
                     <td className="p-2 max-w-md break-words">{item.project_topic || '-'}</td>
                     <td className="p-2 whitespace-nowrap">{item.client || '-'}</td>
                     <td className="p-2 whitespace-nowrap">
@@ -345,7 +348,6 @@ export default function PJTDataList({ user }: PJTDataListProps) {
                     <td className="p-2 whitespace-nowrap">
                       {item.inquiry_date ? format(new Date(item.inquiry_date), 'dd/MM/yyyy') : '-'}
                     </td>
-                    <td className="p-2 whitespace-nowrap">{item.status || '-'}</td>
                   </tr>
                 ))}
               </tbody>

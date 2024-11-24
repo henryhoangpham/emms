@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from "@/components/ui/button";
-import { Users, Briefcase, X, ChevronLeft, ChevronRight, Calendar, FolderTree, BookOpen, Database } from "lucide-react";
+import { Users, Briefcase, X, ChevronLeft, ChevronRight, Calendar, FolderTree, BookOpen, Database, BarChart } from "lucide-react";
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Logo } from './Logo';
@@ -55,7 +55,7 @@ export function Sidebar({ onClose }: SidebarProps) {
 
         {/* Navigation */}
         <nav className="space-y-2">
-          <Link href="/allocations">
+          {/* <Link href="/allocations">
             <Button 
               variant={pathname.startsWith('/allocations') ? "secondary" : "ghost"} 
               className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
@@ -114,6 +114,16 @@ export function Sidebar({ onClose }: SidebarProps) {
               <BookOpen className="h-4 w-4" />
               {isExpanded && <span className="ml-2">Knowledge</span>}
             </Button>
+          </Link> */}
+          <Link href="/pjt">
+            <Button 
+              variant={pathname.startsWith('/pjt') ? "secondary" : "ghost"} 
+              className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
+              title="PJT Data"
+            >
+              <Database className="h-4 w-4" />
+              {isExpanded && <span className="ml-2">PJT</span>}
+            </Button>
           </Link>
           <Link href="/master">
             <Button 
@@ -125,16 +135,6 @@ export function Sidebar({ onClose }: SidebarProps) {
               {isExpanded && <span className="ml-2">Master Data</span>}
             </Button>
           </Link>
-          <Link href="/pjt">
-            <Button 
-              variant={pathname.startsWith('/pjt') ? "secondary" : "ghost"} 
-              className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
-              title="PJT Data"
-            >
-              <Database className="h-4 w-4" />
-              {isExpanded && <span className="ml-2">PJT</span>}
-            </Button>
-          </Link>
           <Link href="/operational-clients">
             <Button 
               variant={pathname.startsWith('/operational-clients') ? "secondary" : "ghost"} 
@@ -143,6 +143,16 @@ export function Sidebar({ onClose }: SidebarProps) {
             >
               <Users className="h-4 w-4" />
               {isExpanded && <span className="ml-2">Operational Clients</span>}
+            </Button>
+          </Link>
+          <Link href="/client-stats">
+            <Button 
+              variant={pathname.startsWith('/client-stats') ? "secondary" : "ghost"} 
+              className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
+              title="Client Stats"
+            >
+              <BarChart className="h-4 w-4" />
+              {isExpanded && <span className="ml-2">Client Stats</span>}
             </Button>
           </Link>
         </nav>

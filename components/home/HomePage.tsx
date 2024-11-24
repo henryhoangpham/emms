@@ -13,17 +13,17 @@ import PJTDataList from '@/components/misc/PJTDataList';
 import OperationalClientList from '@/components/misc/OperationalClientList';
 
 export default function HomePage({ user }: { user: User }) {
-  const [activeTab, setActiveTab] = useState('allocations');
+  const [activeTab, setActiveTab] = useState('pjt');
 
   return (
     <DashboardLayout user={user}>
-      {activeTab === 'allocations' && <AllocationsPage user={user} />}
+      {/* {activeTab === 'allocations' && <AllocationsPage user={user} />}
       {activeTab === 'employees' && <EmployeesPage user={user} />}
       {activeTab === 'clients' && <ClientsPage user={user} />}
       {activeTab === 'projects' && <ProjectsPage user={user} />}
-      {activeTab === 'knowledge' && <KnowledgePage user={user} />}
-      {activeTab === 'master' && <MasterDataList user={user} />}
+      {activeTab === 'knowledge' && <KnowledgePage user={user} />} */}
       {activeTab === 'pjt' && <PJTDataList user={user} />}
+      {activeTab === 'master' && <MasterDataList user={user} />}
       {activeTab === 'operational-clients' && <OperationalClientList user={user} />}
     </DashboardLayout>
   );

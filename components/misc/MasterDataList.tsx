@@ -309,14 +309,16 @@ export default function MasterDataList({ user }: MasterDataListProps) {
               <thead>
                 <tr className="text-left bg-muted">
                   <th className="p-2 whitespace-nowrap">Date</th>
-                  <th className="p-2 whitespace-nowrap">Name</th>
-                  <th className="p-2 whitespace-nowrap">Expert</th>
+                  <th className="p-2 whitespace-nowrap">Record Type</th>
                   <th className="p-2 whitespace-nowrap">Project</th>
                   <th className="p-2 whitespace-nowrap">Channel</th>
-                  <th className="p-2 whitespace-nowrap">Position</th>
+                  <th className="p-2 whitespace-nowrap">Client</th>
                   <th className="p-2 whitespace-nowrap">Expert Fee</th>
-                  <th className="p-2 whitespace-nowrap">Client Fee</th>
-                  <th className="p-2 whitespace-nowrap">Net Revenue</th>
+                  <th className="p-2 whitespace-nowrap">USD Expert Fee</th>
+                  <th className="p-2 whitespace-nowrap">USD Client Fee</th>
+                  <th className="p-2 whitespace-nowrap">USD Net Revenue</th>
+                  <th className="p-2 whitespace-nowrap">Expert Name</th>
+                  <th className="p-2 whitespace-nowrap">Position</th>
                 </tr>
               </thead>
               <tbody>
@@ -328,26 +330,32 @@ export default function MasterDataList({ user }: MasterDataListProps) {
                     <td className="p-2 whitespace-nowrap">
                       {item.date ? format(new Date(item.date), 'dd/MM/yyyy') : '-'}
                     </td>
-                    <td className="p-2 max-w-md break-words">{item.name || '-'}</td>
                     <td className="p-2 whitespace-nowrap">{item.candidate_expert || '-'}</td>
                     <td className="p-2 max-w-md break-words">{item.pjt || '-'}</td>
                     <td className="p-2 whitespace-nowrap">{item.channel || '-'}</td>
+                    <td className="p-2 whitespace-nowrap">{item.true_client || '-'}</td>
+                    <td className="p-2 whitespace-nowrap">
+                      {item.actual_expert_fee 
+                        ? `${item.proposed_currency} ${item.actual_expert_fee.toFixed(2)}` 
+                        : '-'}
+                    </td>
+                    <td className="p-2 whitespace-nowrap">
+                      {item.usd_actual_expert_fee 
+                        ? `${item.usd_actual_expert_fee.toFixed(2)}` 
+                        : '-'}
+                    </td>
+                    <td className="p-2 whitespace-nowrap">
+                      {item.usd_actual_client_fee 
+                        ? `${item.usd_actual_client_fee.toFixed(2)}` 
+                        : '-'}
+                    </td>
+                    <td className="p-2 whitespace-nowrap">
+                      {item.usd_actual_net_revenue 
+                        ? `${item.usd_actual_net_revenue.toFixed(2)}` 
+                        : '-'}
+                    </td>
+                    <td className="p-2 max-w-md break-words">{item.name || '-'}</td>
                     <td className="p-2 whitespace-nowrap">{item.position || '-'}</td>
-                    <td className="p-2 whitespace-nowrap">
-                      {item.fee_for_expert 
-                        ? `${item.proposed_currency} ${item.fee_for_expert.toFixed(2)}` 
-                        : '-'}
-                    </td>
-                    <td className="p-2 whitespace-nowrap">
-                      {item.fee_from_client 
-                        ? `${item.proposed_currency} ${item.fee_from_client.toFixed(2)}` 
-                        : '-'}
-                    </td>
-                    <td className="p-2 whitespace-nowrap">
-                      {item.net_revenue 
-                        ? `${item.proposed_currency} ${item.net_revenue.toFixed(2)}` 
-                        : '-'}
-                    </td>
                   </tr>
                 ))}
               </tbody>
