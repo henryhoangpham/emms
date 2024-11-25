@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
-import { Check, ChevronDown, X, RotateCw } from "lucide-react";
+import { Check, ChevronDown, X, RotateCw, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/utils/cn";
 import { Button } from '@/components/ui/button';
@@ -288,6 +288,143 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
     return Math.round(num).toLocaleString();
   };
 
+  const handleExport = async () => {
+    try {
+      setLoading(true);
+      toast({
+        title: "Exporting...",
+        description: "Please wait while we prepare your data.",
+      });
+
+      // Get all client codes from current data
+      const clientCodes = data.map(client => client.client_code_name);
+      
+      // Fetch stats for all clients
+      const stats = await getClientCombineStats(supabase, clientCodes);
+      
+      // Define column order to match the display
+      const clientInfoColumns = [
+        'Client Code',
+        'Company Name',
+        'Contract Type',
+        'Country',
+        'Company Segment',
+        'Priority',
+        'AM',
+        'PM',
+        'Client Facing'
+      ] as const;
+
+      // Get months in same order as display (descending)
+      const months = getAllMonths();
+      const monthlyColumns = months.flatMap(month => [
+        `${month}_PJT`,
+        `${month}_CR`,
+        `${month}_CDD`,
+        `${month}_DBCDD`,
+        `${month}_IV`,
+        `${month}_DBIV`,
+        `${month}_Rev`,
+        `${month}_NR`,
+      ]);
+
+      // YTD columns in same order as display
+      const ytdColumns = [
+        'YTD_PJT',
+        'YTD_CR',
+        'YTD_CDD',
+        'YTD_DBCDD',
+        'YTD_IV',
+        'YTD_DBIV',
+        'YTD_Rev',
+        'YTD_NR',
+      ] as const;
+
+      // Combine all columns in correct order
+      const orderedColumns = [...clientInfoColumns, ...monthlyColumns, ...ytdColumns] as const;
+      
+      // Format data for export
+      const exportData = stats.map(clientStat => {
+        const client = data.find(c => c.client_code_name === clientStat.client_code);
+        
+        // Create base record with client info
+        const record: Record<string, any> = {
+          'Client Code': client?.client_code_name || '',
+          'Company Name': client?.company_name || '',
+          'Contract Type': client?.contract_type || '',
+          'Country': client?.country_code || '',
+          'Company Segment': client?.company_segment || '',
+          'Priority': client?.existing_account_priority || '',
+          'AM': client?.am || '',
+          'PM': client?.pm || '',
+          'Client Facing': client?.client_facing || '',
+        };
+
+        // Add monthly stats in correct order
+        clientStat.monthly_data.forEach(month => {
+          record[`${month.month}_PJT`] = month.stats.pjt;
+          record[`${month.month}_CR`] = month.stats.cr;
+          record[`${month.month}_CDD`] = month.stats.cdd;
+          record[`${month.month}_DBCDD`] = month.stats.dbcdd;
+          record[`${month.month}_IV`] = month.stats.iv;
+          record[`${month.month}_DBIV`] = month.stats.dbiv;
+          record[`${month.month}_Rev`] = month.stats.revenue;
+          record[`${month.month}_NR`] = month.stats.net_revenue;
+        });
+
+        // Add YTD stats
+        record['YTD_PJT'] = clientStat.ytd_totals.stats.pjt;
+        record['YTD_CR'] = clientStat.ytd_totals.stats.cr;
+        record['YTD_CDD'] = clientStat.ytd_totals.stats.cdd;
+        record['YTD_DBCDD'] = clientStat.ytd_totals.stats.dbcdd;
+        record['YTD_IV'] = clientStat.ytd_totals.stats.iv;
+        record['YTD_DBIV'] = clientStat.ytd_totals.stats.dbiv;
+        record['YTD_Rev'] = clientStat.ytd_totals.stats.revenue;
+        record['YTD_NR'] = clientStat.ytd_totals.stats.net_revenue;
+
+        return record;
+      });
+
+      // Convert to CSV using ordered columns
+      const csvContent = [
+        orderedColumns.join(','),
+        ...exportData.map(row => 
+          orderedColumns.map(header => {
+            const value = row[header] ?? '';
+            // Handle values that might contain commas
+            return typeof value === 'string' && value.includes(',') 
+              ? `"${value}"`
+              : value;
+          }).join(',')
+        )
+      ].join('\n');
+
+      // Create and download file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `client_stats_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast({
+        title: "Export Complete",
+        description: "Your data has been exported successfully.",
+      });
+    } catch (error) {
+      console.error('Export error:', error);
+      toast({
+        title: "Export Failed",
+        description: "There was an error exporting your data. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -295,10 +432,20 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
   return (
-    <div className="w-full relative">
+    <div className="w-full">
       <Card>
-        <CardHeader className="py-4">
-          <CardTitle className="text-base">Client Combine Stats</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Client Combine Stats</CardTitle>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2"
+            onClick={handleExport}
+            disabled={loading || data.length === 0}
+          >
+            <Download className="h-4 w-4" />
+            Export
+          </Button>
         </CardHeader>
         <CardContent>
           <div className="mb-4 grid gap-4 grid-cols-1 md:grid-cols-2">
