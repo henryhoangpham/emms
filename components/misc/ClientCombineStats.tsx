@@ -558,16 +558,20 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
         </CardHeader>
         <CardContent>
           <div className="mb-4 grid gap-4 grid-cols-1 md:grid-cols-2">
-            <div className="order-1">
+            <div className="order-1 flex flex-col gap-4">
               <div className="flex gap-4">
-                <div className="flex-1">
+                <div className="flex-[3]">
                   <Label>Invoice Entity</Label>
-                  <Select
-                    value={invoiceEntity}
-                    onValueChange={handleInvoiceEntityChange}
-                  >
+                  <Select value={invoiceEntity} onValueChange={handleInvoiceEntityChange}>
                     <SelectTrigger className="text-sm">
-                      <SelectValue placeholder="Invoice Entity" />
+                      <div className="flex items-center w-full">
+                        <SelectValue 
+                          placeholder="Invoice Entity" 
+                          className="truncate text-left w-full block"
+                        >
+                          {invoiceEntity}
+                        </SelectValue>
+                      </div>
                     </SelectTrigger>
                     <SelectContent>
                       {INVOICE_ENTITIES.map((entity) => (
@@ -579,18 +583,22 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
                   </Select>
                 </div>
 
-                <div className="flex-1">
+                <div className="flex-[2]">
                   <Label>Contract Type</Label>
-                  <Select
-                    value={contractType}
-                    onValueChange={handleContractTypeChange}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Contract Type" />
+                  <Select value={contractType} onValueChange={handleContractTypeChange}>
+                    <SelectTrigger className="text-sm">
+                      <div className="flex items-center w-full">
+                        <SelectValue 
+                          placeholder="Contract Type" 
+                          className="truncate text-left w-full block"
+                        >
+                          {contractType}
+                        </SelectValue>
+                      </div>
                     </SelectTrigger>
                     <SelectContent>
                       {CONTRACT_TYPES.map((type) => (
-                        <SelectItem key={type} value={type}>
+                        <SelectItem key={type} value={type} className="text-sm">
                           {type}
                         </SelectItem>
                       ))}
@@ -598,7 +606,7 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
                   </Select>
                 </div>
 
-                <div className="flex-1">
+                <div className="flex-[1.5]">
                   <Label>Segment</Label>
                   <Popover open={segmentSearchOpen} onOpenChange={setSegmentSearchOpen}>
                     <PopoverTrigger asChild>
@@ -606,12 +614,16 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
                         variant="outline"
                         role="combobox"
                         aria-expanded={segmentSearchOpen}
-                        className="w-full justify-between"
+                        className="w-full justify-between text-sm h-10 px-3"
                       >
-                        {selectedSegments.length === 0 
-                          ? "All segments" 
-                          : `${selectedSegments.length} selected`}
-                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        <div className="flex items-center w-full">
+                          <span className="truncate text-left flex-1 block">
+                            {selectedSegments.length === 0 
+                              ? "All" 
+                              : `${selectedSegments.length} selected`}
+                          </span>
+                          <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50 flex-none" />
+                        </div>
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-[200px] p-0">
@@ -642,27 +654,9 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
                       </Command>
                     </PopoverContent>
                   </Popover>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {selectedSegments.map((segment) => (
-                      <Badge
-                        key={segment}
-                        variant="secondary"
-                        className="flex items-center gap-1"
-                      >
-                        {segment}
-                        <button
-                          type="button"
-                          className="ml-1 hover:bg-muted rounded-full"
-                          onClick={() => removeSegment(segment)}
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
                 </div>
 
-                <div className="w-24">
+                <div className="flex-1">
                   <Label>Priority</Label>
                   <Popover open={prioritySearchOpen} onOpenChange={setPrioritySearchOpen}>
                     <PopoverTrigger asChild>
@@ -670,12 +664,16 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
                         variant="outline"
                         role="combobox"
                         aria-expanded={prioritySearchOpen}
-                        className="w-full justify-between"
+                        className="w-full justify-between text-sm h-10 px-3"
                       >
-                        {selectedPriorities.length === 0 
-                          ? "All"
-                          : `${selectedPriorities.length}`}
-                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        <div className="flex items-center w-full">
+                          <span className="truncate text-left flex-1 block">
+                            {selectedPriorities.length === 0 
+                              ? "All"
+                              : `${selectedPriorities.length}`}
+                          </span>
+                          <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50 flex-none" />
+                        </div>
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-[200px] p-0">
@@ -706,24 +704,6 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
                       </Command>
                     </PopoverContent>
                   </Popover>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {selectedPriorities.map((priority) => (
-                      <Badge
-                        key={priority}
-                        variant="secondary"
-                        className="flex items-center gap-1"
-                      >
-                        {priority}
-                        <button
-                          type="button"
-                          className="ml-1 hover:bg-muted rounded-full"
-                          onClick={() => removePriority(priority)}
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
                 </div>
               </div>
             </div>
@@ -732,10 +712,10 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
               <Label>Search</Label>
               <Input
                 ref={searchInputRef}
-                placeholder="Search Client Code, Client, Client ID..."
+                placeholder="Search Client Code, Client..."
                 value={searchTerm}
                 onChange={handleSearchChange}
-                className="w-full text-sm"
+                className="w-full"
               />
             </div>
           </div>
