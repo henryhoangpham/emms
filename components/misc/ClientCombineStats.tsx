@@ -328,32 +328,36 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
   };
 
   // Add helper functions for calculations
-  const calculateCompletion = (cdd: number | null, cr: number | null): string => {
+  const calculateCompletion = (cdd: number | undefined | null, cr: number | undefined | null): string => {
     if (!cdd || !cr || cr === 0) return '-';
     return `${Math.round((cdd / cr) * 100)}%`;
   };
 
-  const calculateCustomIV = (iv: number | null, dbi: number | null): number | null => {
+  const calculateCustomIV = (iv: number | undefined | null, dbi: number | undefined | null): number | null => {
     if (!iv || !dbi) return null;
     return iv - dbi;
   };
 
-  const calculateMinPerIV = (totalDuration: number | null, iv: number | null): string => {
+  const calculateMinPerIV = (totalDuration: number | undefined | null, iv: number | undefined | null): string => {
     if (!totalDuration || !iv || iv === 0) return '-';
     return Math.round(totalDuration / iv).toString();
   };
 
-  const calculateCVR = (iv: number | null, cdd: number | null): string => {
+  const calculateCVR = (iv: number | undefined | null, cdd: number | undefined | null): string => {
     if (!iv || !cdd || cdd === 0) return '-';
     return `${Math.round((iv / cdd) * 100)}%`;
   };
 
-  const calculateCustomCVR = (iv: number | null, dbi: number | null, cdd: number | null): string => {
+  const calculateCustomCVR = (
+    iv: number | undefined | null, 
+    dbi: number | undefined | null, 
+    cdd: number | undefined | null
+  ): string => {
     if (!iv || !dbi || !cdd || cdd === 0) return '-';
     return `${Math.round(((iv - dbi) / cdd) * 100)}%`;
   };
 
-  const calculateIVPerCR = (iv: number | null, cr: number | null): string => {
+  const calculateIVPerCR = (iv: number | undefined | null, cr: number | undefined | null): string => {
     if (!iv || !cr || cr === 0) return '-';
     return `${Math.round((iv / cr) * 100)}%`;
   };
