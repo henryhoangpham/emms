@@ -36,6 +36,22 @@ const CONTRACT_TYPES = [
 
 const PRIORITY_OPTIONS = [5,4,3,2,1] as const;
 
+// Add Segment constants
+const SEGMENT_OPTIONS = [
+  "1. Consulting Firm",
+  "1b. Research Firm",
+  "2. Private Equity",
+  "2b Venture Capital",
+  "3. Hedge Fund",
+  "3b Long Only",
+  "3c Asset Management",
+  "3d Sell Side",
+  "4. Corporate",
+  "5. Others",
+  "5c ENS",
+  "6. Recruiting Company"
+] as const;
+
 interface ClientCombineStatsProps {
   user: User;
 }
@@ -59,6 +75,8 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
   const [selectedPriorities, setSelectedPriorities] = useState<number[]>([]);
   const [prioritySearchOpen, setPrioritySearchOpen] = useState(false);
   const [statsError, setStatsError] = useState(false);
+  const [selectedSegments, setSelectedSegments] = useState<string[]>([]);
+  const [segmentSearchOpen, setSegmentSearchOpen] = useState(false);
 
   const fetchStats = useCallback(async (clientCodes: string[]) => {
     if (statsAbortController.current) {
@@ -101,7 +119,8 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
     currentSearchTerm?: string,
     currentInvoiceEntity?: string,
     currentContractType?: string,
-    currentPriorities?: number[]
+    currentPriorities?: number[],
+    currentSegments?: string[]
   ) => {
     try {
       setLoading(true);
@@ -113,7 +132,8 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
         currentInvoiceEntity ?? invoiceEntity,
         currentContractType ?? contractType,
         currentSearchTerm ?? searchTerm,
-        currentPriorities ?? selectedPriorities
+        currentPriorities ?? selectedPriorities,
+        currentSegments ?? selectedSegments
       );
       
       if (operationalClients) {
@@ -135,14 +155,15 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
     } finally {
       setLoading(false);
     }
-  }, [supabase, currentPage, itemsPerPage, searchTerm, invoiceEntity, contractType, selectedPriorities, toast, fetchStats]);
+  }, [supabase, currentPage, itemsPerPage, searchTerm, invoiceEntity, contractType, selectedPriorities, selectedSegments, toast, fetchStats]);
 
   const debouncedSearch = useCallback((
     fromSearchInput: boolean = false,
     newSearchTerm?: string,
     newInvoiceEntity?: string,
     newContractType?: string,
-    newPriorities?: number[]
+    newPriorities?: number[],
+    newSegments?: string[]
   ) => {
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
@@ -150,7 +171,7 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
 
     searchTimeoutRef.current = setTimeout(() => {
       setCurrentPage(1);
-      fetchData(true, newSearchTerm, newInvoiceEntity, newContractType, newPriorities);
+      fetchData(true, newSearchTerm, newInvoiceEntity, newContractType, newPriorities, newSegments);
       if (fromSearchInput && searchInputRef.current) {
         searchInputRef.current.focus();
       }
@@ -161,17 +182,17 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setSearchTerm(newValue);
-    debouncedSearch(true, newValue, invoiceEntity, contractType);
+    debouncedSearch(true, newValue, invoiceEntity, contractType, selectedPriorities, selectedSegments);
   };
 
   const handleInvoiceEntityChange = (value: string) => {
     setInvoiceEntity(value);
-    debouncedSearch(false, searchTerm, value, contractType);
+    debouncedSearch(false, searchTerm, value, contractType, selectedPriorities, selectedSegments);
   };
 
   const handleContractTypeChange = (value: string) => {
     setContractType(value);
-    debouncedSearch(false, searchTerm, invoiceEntity, value);
+    debouncedSearch(false, searchTerm, invoiceEntity, value, selectedPriorities, selectedSegments);
   };
 
   const handlePrioritySelect = (priority: number) => {
@@ -179,7 +200,7 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
       const newPriorities = current.includes(priority)
         ? current.filter(p => p !== priority)
         : [...current, priority];
-      debouncedSearch(false, searchTerm, invoiceEntity, contractType, newPriorities);
+      debouncedSearch(false, searchTerm, invoiceEntity, contractType, newPriorities, selectedSegments);
       return newPriorities;
     });
   };
@@ -187,8 +208,26 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
   const removePriority = (priority: number) => {
     setSelectedPriorities(current => {
       const newPriorities = current.filter(p => p !== priority);
-      debouncedSearch(false, searchTerm, invoiceEntity, contractType, newPriorities);
+      debouncedSearch(false, searchTerm, invoiceEntity, contractType, newPriorities, selectedSegments);
       return newPriorities;
+    });
+  };
+
+  const handleSegmentSelect = (segment: string) => {
+    setSelectedSegments(current => {
+      const newSegments = current.includes(segment)
+        ? current.filter(s => s !== segment)
+        : [...current, segment];
+      debouncedSearch(false, searchTerm, invoiceEntity, contractType, selectedPriorities, newSegments);
+      return newSegments;
+    });
+  };
+
+  const removeSegment = (segment: string) => {
+    setSelectedSegments(current => {
+      const newSegments = current.filter(s => s !== segment);
+      debouncedSearch(false, searchTerm, invoiceEntity, contractType, selectedPriorities, newSegments);
+      return newSegments;
     });
   };
 
@@ -559,6 +598,70 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
                   </Select>
                 </div>
 
+                <div className="flex-1">
+                  <Label>Segment</Label>
+                  <Popover open={segmentSearchOpen} onOpenChange={setSegmentSearchOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={segmentSearchOpen}
+                        className="w-full justify-between"
+                      >
+                        {selectedSegments.length === 0 
+                          ? "All segments" 
+                          : `${selectedSegments.length} selected`}
+                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[200px] p-0">
+                      <Command>
+                        <CommandInput placeholder="Search segments..." />
+                        <CommandEmpty>No segment found.</CommandEmpty>
+                        <CommandGroup className="max-h-64 overflow-auto">
+                          {SEGMENT_OPTIONS.map((segment) => (
+                            <CommandItem
+                              key={segment}
+                              value={segment}
+                              onSelect={() => handleSegmentSelect(segment)}
+                            >
+                              <div className="flex items-center gap-2">
+                                <div className={cn(
+                                  "h-4 w-4 border rounded-sm flex items-center justify-center",
+                                  selectedSegments.includes(segment) ? "bg-primary border-primary" : "border-input"
+                                )}>
+                                  {selectedSegments.includes(segment) && 
+                                    <Check className="h-3 w-3 text-primary-foreground" />
+                                  }
+                                </div>
+                                {segment}
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {selectedSegments.map((segment) => (
+                      <Badge
+                        key={segment}
+                        variant="secondary"
+                        className="flex items-center gap-1"
+                      >
+                        {segment}
+                        <button
+                          type="button"
+                          className="ml-1 hover:bg-muted rounded-full"
+                          onClick={() => removeSegment(segment)}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+
                 <div className="w-24">
                   <Label>Priority</Label>
                   <Popover open={prioritySearchOpen} onOpenChange={setPrioritySearchOpen}>
@@ -717,7 +820,7 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
                           <th className="p-1.5 whitespace-nowrap text-xs font-medium">Comp</th>
                           <th className="p-1.5 whitespace-nowrap text-xs font-medium">IV</th>
                           <th className="p-1.5 whitespace-nowrap text-xs font-medium">DBI</th>
-                          <th className="p-1.5 whitespace-nowrap text-xs font-medium">Ctm IV</th>
+                          <th className="p-1.5 whitespace-nowrap text-xs font-medium">CsIV</th>
                           <th className="p-1.5 whitespace-nowrap text-xs font-medium">Min/IV</th>
                           <th className="p-1.5 whitespace-nowrap text-xs font-medium">CVR</th>
                           <th className="p-1.5 whitespace-nowrap text-xs font-medium">CVR(C)</th>
@@ -790,7 +893,7 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
                         <th className="p-1.5 whitespace-nowrap text-xs font-medium">Comp</th>
                         <th className="p-1.5 whitespace-nowrap text-xs font-medium">IV</th>
                         <th className="p-1.5 whitespace-nowrap text-xs font-medium">DBI</th>
-                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">Ctm IV</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">CsIV</th>
                         <th className="p-1.5 whitespace-nowrap text-xs font-medium">Min/IV</th>
                         <th className="p-1.5 whitespace-nowrap text-xs font-medium">CVR</th>
                         <th className="p-1.5 whitespace-nowrap text-xs font-medium">CVR(C)</th>

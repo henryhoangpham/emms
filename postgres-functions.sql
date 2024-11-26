@@ -197,7 +197,9 @@ CREATE OR REPLACE FUNCTION search_operational_clients(
     p_offset INT DEFAULT 0,
     p_invoice_entity TEXT DEFAULT 'All',
     p_contract_type TEXT DEFAULT 'All',
-    p_search_string TEXT DEFAULT ''
+    p_search_string TEXT DEFAULT '',
+    p_priorities BIGINT[] DEFAULT ARRAY[]::integer[],
+    p_segments TEXT[] DEFAULT NULL
 )
 RETURNS TABLE (
     ID BIGINT,
@@ -256,6 +258,16 @@ BEGIN
             "OperationalClients"."Client_Code_Name" ILIKE '%' || p_search_string || '%' OR
             "OperationalClients"."Company_name" ILIKE '%' || p_search_string || '%' OR
             "OperationalClients"."Client_ID" ILIKE '%' || p_search_string || '%'
+        )
+        AND (
+            -- Priorities filter
+            ARRAY_LENGTH(p_priorities, 1) IS NULL OR 
+            "OperationalClients"."Existing_Account_Priority" = ANY(p_priorities)
+        )
+        AND (
+            -- Segments filter
+            p_segments IS NULL OR 
+            "OperationalClients"."Company_Segment" = ANY(p_segments)
         )
     ),
     total AS (

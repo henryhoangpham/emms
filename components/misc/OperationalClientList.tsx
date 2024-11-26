@@ -37,6 +37,21 @@ const CONTRACT_TYPES = [
 
 const PRIORITY_OPTIONS = [5,4,3,2,1] as const;
 
+const SEGMENT_OPTIONS = [
+  "1. Consulting Firm",
+  "1b. Research Firm",
+  "2. Private Equity",
+  "2b Venture Capital",
+  "3. Hedge Fund",
+  "3b Long Only",
+  "3c Asset Management",
+  "3d Sell Side",
+  "4. Corporate",
+  "5. Others",
+  "5c ENS",
+  "6. Recruiting Company"
+] as const;
+
 interface OperationalClientListProps {
   user: User;
 }
@@ -52,6 +67,8 @@ export default function OperationalClientList({ user }: OperationalClientListPro
   const [contractType, setContractType] = useState('All');
   const [selectedPriorities, setSelectedPriorities] = useState<number[]>([]);
   const [prioritySearchOpen, setPrioritySearchOpen] = useState(false);
+  const [selectedSegments, setSelectedSegments] = useState<string[]>([]);
+  const [segmentSearchOpen, setSegmentSearchOpen] = useState(false);
   const { toast } = useToast();
   const supabase = createClient();
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -62,7 +79,8 @@ export default function OperationalClientList({ user }: OperationalClientListPro
     currentSearchTerm?: string,
     currentInvoiceEntity?: string,
     currentContractType?: string,
-    currentPriorities?: number[]
+    currentPriorities?: number[],
+    currentSegments?: string[]
   ) => {
     try {
       console.log('fetchData: starting', {
@@ -83,7 +101,8 @@ export default function OperationalClientList({ user }: OperationalClientListPro
         currentInvoiceEntity ?? invoiceEntity,
         currentContractType ?? contractType,
         currentSearchTerm ?? searchTerm,
-        currentPriorities ?? selectedPriorities
+        currentPriorities ?? selectedPriorities,
+        currentSegments ?? selectedSegments
       );
 
       console.log('fetchData: operationalClients', operationalClients);
@@ -102,14 +121,15 @@ export default function OperationalClientList({ user }: OperationalClientListPro
       setLoading(false);
       console.log('fetchData: finished');
     }
-  }, [supabase, currentPage, itemsPerPage, searchTerm, invoiceEntity, contractType, selectedPriorities, toast]);
+  }, [supabase, currentPage, itemsPerPage, searchTerm, invoiceEntity, contractType, selectedPriorities, selectedSegments, toast]);
 
   const debouncedSearch = useCallback((
     fromSearchInput: boolean = false,
     newSearchTerm?: string,
     newInvoiceEntity?: string,
     newContractType?: string,
-    newPriorities?: number[]
+    newPriorities?: number[],
+    newSegments?: string[]
   ) => {
     if (searchTimeoutRef.current) {
       console.log('debouncedSearch: clearing timeout');
@@ -119,7 +139,7 @@ export default function OperationalClientList({ user }: OperationalClientListPro
     searchTimeoutRef.current = setTimeout(() => {
       console.log('debouncedSearch: executing search');
       setCurrentPage(1);
-      fetchData(true, newSearchTerm, newInvoiceEntity, newContractType, newPriorities);
+      fetchData(true, newSearchTerm, newInvoiceEntity, newContractType, newPriorities, newSegments);
       if (fromSearchInput && searchInputRef.current) {
         console.log('debouncedSearch: focusing search input');
         searchInputRef.current.focus();
@@ -131,17 +151,17 @@ export default function OperationalClientList({ user }: OperationalClientListPro
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setSearchTerm(newValue);
-    debouncedSearch(true, newValue, invoiceEntity, contractType, selectedPriorities);
+    debouncedSearch(true, newValue, invoiceEntity, contractType, selectedPriorities, selectedSegments);
   };
 
   const handleInvoiceEntityChange = (value: string) => {
     setInvoiceEntity(value);
-    debouncedSearch(false, searchTerm, value, contractType, selectedPriorities);
+    debouncedSearch(false, searchTerm, value, contractType, selectedPriorities, selectedSegments);
   };
 
   const handleContractTypeChange = (value: string) => {
     setContractType(value);
-    debouncedSearch(false, searchTerm, invoiceEntity, value, selectedPriorities);
+    debouncedSearch(false, searchTerm, invoiceEntity, value, selectedPriorities, selectedSegments);
   };
 
   const handlePrioritySelect = (priority: number) => {
@@ -149,7 +169,7 @@ export default function OperationalClientList({ user }: OperationalClientListPro
       const newPriorities = current.includes(priority)
         ? current.filter(p => p !== priority)
         : [...current, priority];
-      debouncedSearch(false, searchTerm, invoiceEntity, contractType, newPriorities);
+      debouncedSearch(false, searchTerm, invoiceEntity, contractType, newPriorities, selectedSegments);
       return newPriorities;
     });
   };
@@ -157,8 +177,26 @@ export default function OperationalClientList({ user }: OperationalClientListPro
   const removePriority = (priority: number) => {
     setSelectedPriorities(current => {
       const newPriorities = current.filter(p => p !== priority);
-      debouncedSearch(false, searchTerm, invoiceEntity, contractType, newPriorities);
+      debouncedSearch(false, searchTerm, invoiceEntity, contractType, newPriorities, selectedSegments);
       return newPriorities;
+    });
+  };
+
+  const handleSegmentSelect = (segment: string) => {
+    setSelectedSegments(current => {
+      const newSegments = current.includes(segment)
+        ? current.filter(s => s !== segment)
+        : [...current, segment];
+      debouncedSearch(false, searchTerm, invoiceEntity, contractType, selectedPriorities, newSegments);
+      return newSegments;
+    });
+  };
+
+  const removeSegment = (segment: string) => {
+    setSelectedSegments(current => {
+      const newSegments = current.filter(s => s !== segment);
+      debouncedSearch(false, searchTerm, invoiceEntity, contractType, selectedPriorities, newSegments);
+      return newSegments;
     });
   };
 
@@ -237,6 +275,70 @@ export default function OperationalClientList({ user }: OperationalClientListPro
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div className="flex-1">
+                  <Label>Segment</Label>
+                  <Popover open={segmentSearchOpen} onOpenChange={setSegmentSearchOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={segmentSearchOpen}
+                        className="w-full justify-between"
+                      >
+                        {selectedSegments.length === 0 
+                          ? "All segments" 
+                          : `${selectedSegments.length} selected`}
+                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[200px] p-0">
+                      <Command>
+                        <CommandInput placeholder="Search segments..." />
+                        <CommandEmpty>No segment found.</CommandEmpty>
+                        <CommandGroup className="max-h-64 overflow-auto">
+                          {SEGMENT_OPTIONS.map((segment) => (
+                            <CommandItem
+                              key={segment}
+                              value={segment}
+                              onSelect={() => handleSegmentSelect(segment)}
+                            >
+                              <div className="flex items-center gap-2">
+                                <div className={cn(
+                                  "h-4 w-4 border rounded-sm flex items-center justify-center",
+                                  selectedSegments.includes(segment) ? "bg-primary border-primary" : "border-input"
+                                )}>
+                                  {selectedSegments.includes(segment) && 
+                                    <Check className="h-3 w-3 text-primary-foreground" />
+                                  }
+                                </div>
+                                {segment}
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {selectedSegments.map((segment) => (
+                      <Badge
+                        key={segment}
+                        variant="secondary"
+                        className="flex items-center gap-1"
+                      >
+                        {segment}
+                        <button
+                          type="button"
+                          className="ml-1 hover:bg-muted rounded-full"
+                          onClick={() => removeSegment(segment)}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
 
                 <div className="w-24">
