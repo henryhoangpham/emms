@@ -288,6 +288,37 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
     return Math.round(num).toLocaleString();
   };
 
+  // Add helper functions for calculations
+  const calculateCompletion = (cdd: number | null, cr: number | null): string => {
+    if (!cdd || !cr || cr === 0) return '-';
+    return `${Math.round((cdd / cr) * 100)}%`;
+  };
+
+  const calculateCustomIV = (iv: number | null, dbi: number | null): number | null => {
+    if (!iv || !dbi) return null;
+    return iv - dbi;
+  };
+
+  const calculateMinPerIV = (totalDuration: number | null, iv: number | null): string => {
+    if (!totalDuration || !iv || iv === 0) return '-';
+    return Math.round(totalDuration / iv).toString();
+  };
+
+  const calculateCVR = (iv: number | null, cdd: number | null): string => {
+    if (!iv || !cdd || cdd === 0) return '-';
+    return `${Math.round((iv / cdd) * 100)}%`;
+  };
+
+  const calculateCustomCVR = (iv: number | null, dbi: number | null, cdd: number | null): string => {
+    if (!iv || !dbi || !cdd || cdd === 0) return '-';
+    return `${Math.round(((iv - dbi) / cdd) * 100)}%`;
+  };
+
+  const calculateIVPerCR = (iv: number | null, cr: number | null): string => {
+    if (!iv || !cr || cr === 0) return '-';
+    return `${Math.round((iv / cr) * 100)}%`;
+  };
+
   const handleExport = async () => {
     try {
       setLoading(true);
@@ -322,8 +353,14 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
         `${month}_CR`,
         `${month}_CDD`,
         `${month}_DBCDD`,
+        `${month}_Comp`,
         `${month}_IV`,
         `${month}_DBIV`,
+        `${month}_Ctm_IV`,
+        `${month}_Min_IV`,
+        `${month}_CVR`,
+        `${month}_CVR_C`,
+        `${month}_IV_CR`,
         `${month}_Rev`,
         `${month}_NR`,
       ]);
@@ -334,8 +371,14 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
         'YTD_CR',
         'YTD_CDD',
         'YTD_DBCDD',
+        'YTD_Comp',
         'YTD_IV',
         'YTD_DBIV',
+        'YTD_Ctm_IV',
+        'YTD_Min_IV',
+        'YTD_CVR',
+        'YTD_CVR_C',
+        'YTD_IV_CR',
         'YTD_Rev',
         'YTD_NR',
       ] as const;
@@ -366,8 +409,14 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
           record[`${month.month}_CR`] = month.stats.cr;
           record[`${month.month}_CDD`] = month.stats.cdd;
           record[`${month.month}_DBCDD`] = month.stats.dbcdd;
+          record[`${month.month}_Comp`] = calculateCompletion(month.stats.cdd, month.stats.cr);
           record[`${month.month}_IV`] = month.stats.iv;
           record[`${month.month}_DBIV`] = month.stats.dbiv;
+          record[`${month.month}_Ctm_IV`] = calculateCustomIV(month.stats.iv, month.stats.dbiv);
+          record[`${month.month}_Min_IV`] = calculateMinPerIV(month.stats.total_duration, month.stats.iv);
+          record[`${month.month}_CVR`] = calculateCVR(month.stats.iv, month.stats.cdd);
+          record[`${month.month}_CVR_C`] = calculateCustomCVR(month.stats.iv, month.stats.dbiv, month.stats.cdd);
+          record[`${month.month}_IV_CR`] = calculateIVPerCR(month.stats.iv, month.stats.cr);
           record[`${month.month}_Rev`] = month.stats.revenue;
           record[`${month.month}_NR`] = month.stats.net_revenue;
         });
@@ -377,8 +426,14 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
         record['YTD_CR'] = clientStat.ytd_totals.stats.cr;
         record['YTD_CDD'] = clientStat.ytd_totals.stats.cdd;
         record['YTD_DBCDD'] = clientStat.ytd_totals.stats.dbcdd;
+        record['YTD_Comp'] = calculateCompletion(clientStat.ytd_totals.stats.cdd, clientStat.ytd_totals.stats.cr);
         record['YTD_IV'] = clientStat.ytd_totals.stats.iv;
         record['YTD_DBIV'] = clientStat.ytd_totals.stats.dbiv;
+        record['YTD_Ctm_IV'] = calculateCustomIV(clientStat.ytd_totals.stats.iv, clientStat.ytd_totals.stats.dbiv);
+        record['YTD_Min_IV'] = calculateMinPerIV(clientStat.ytd_totals.stats.total_duration, clientStat.ytd_totals.stats.iv);
+        record['YTD_CVR'] = calculateCVR(clientStat.ytd_totals.stats.iv, clientStat.ytd_totals.stats.cdd);
+        record['YTD_CVR_C'] = calculateCustomCVR(clientStat.ytd_totals.stats.iv, clientStat.ytd_totals.stats.dbiv, clientStat.ytd_totals.stats.cdd);
+        record['YTD_IV_CR'] = calculateIVPerCR(clientStat.ytd_totals.stats.iv, clientStat.ytd_totals.stats.cr);
         record['YTD_Rev'] = clientStat.ytd_totals.stats.revenue;
         record['YTD_NR'] = clientStat.ytd_totals.stats.net_revenue;
 
@@ -423,6 +478,21 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Add helper function for IV styling
+  const getIVStyle = (value: string | number) => {
+    return "font-bold"; // Bold style for IV
+  };
+
+  // Add helper function for DBI styling
+  const getDBIStyle = (value: string | number) => {
+    return "font-bold text-red-600 dark:text-red-400"; // Bold + red for DBI
+  };
+
+  // Add helper function for Custom IV styling
+  const getCustomIVStyle = (value: string | number) => {
+    return "font-bold text-red-600 dark:text-red-400"; // Bold + red for Custom IV
   };
 
   if (loading) {
@@ -635,7 +705,7 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
                     <table key={month} className={`border-r ${getMonthlyTableBgColor(index)}`}>
                       <thead>
                         <tr className="text-left bg-muted">
-                          <th colSpan={8} className="p-1.5 text-xs font-medium text-center">
+                          <th colSpan={14} className="p-1.5 text-xs font-medium text-center">
                             {formatMonthDisplay(month)}
                           </th>
                         </tr>
@@ -644,8 +714,14 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
                           <th className="p-1.5 whitespace-nowrap text-xs font-medium">CR</th>
                           <th className="p-1.5 whitespace-nowrap text-xs font-medium">CDD</th>
                           <th className="p-1.5 whitespace-nowrap text-xs font-medium">DBC</th>
+                          <th className="p-1.5 whitespace-nowrap text-xs font-medium">Comp</th>
                           <th className="p-1.5 whitespace-nowrap text-xs font-medium">IV</th>
                           <th className="p-1.5 whitespace-nowrap text-xs font-medium">DBI</th>
+                          <th className="p-1.5 whitespace-nowrap text-xs font-medium">Ctm IV</th>
+                          <th className="p-1.5 whitespace-nowrap text-xs font-medium">Min/IV</th>
+                          <th className="p-1.5 whitespace-nowrap text-xs font-medium">CVR</th>
+                          <th className="p-1.5 whitespace-nowrap text-xs font-medium">CVR(C)</th>
+                          <th className="p-1.5 whitespace-nowrap text-xs font-medium">IV/CR</th>
                           <th className="p-1.5 whitespace-nowrap text-xs font-medium">Rev</th>
                           <th className="p-1.5 whitespace-nowrap text-xs font-medium">NR</th>
                         </tr>
@@ -659,8 +735,36 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
                               <td className="p-1.5 text-xs text-right">{monthStats?.cr || '-'}</td>
                               <td className="p-1.5 text-xs text-right">{monthStats?.cdd || '-'}</td>
                               <td className="p-1.5 text-xs text-right">{monthStats?.dbcdd || '-'}</td>
-                              <td className="p-1.5 text-xs text-right">{monthStats?.iv || '-'}</td>
-                              <td className="p-1.5 text-xs text-right">{monthStats?.dbiv || '-'}</td>
+                              <td className="p-1.5 text-xs text-right">
+                                {calculateCompletion(monthStats?.cdd, monthStats?.cr)}
+                              </td>
+                              <td className="p-1.5 text-xs text-right">
+                                <span className={getIVStyle(monthStats?.iv || '-')}>
+                                  {monthStats?.iv || '-'}
+                                </span>
+                              </td>
+                              <td className="p-1.5 text-xs text-right">
+                                <span className={getDBIStyle(monthStats?.dbiv || '-')}>
+                                  {monthStats?.dbiv || '-'}
+                                </span>
+                              </td>
+                              <td className="p-1.5 text-xs text-right">
+                                <span className={getCustomIVStyle(formatNumber(calculateCustomIV(monthStats?.iv, monthStats?.dbiv)) || '-')}>
+                                  {formatNumber(calculateCustomIV(monthStats?.iv, monthStats?.dbiv))}
+                                </span>
+                              </td>
+                              <td className="p-1.5 text-xs text-right">
+                                {calculateMinPerIV(monthStats?.total_duration, monthStats?.iv)}
+                              </td>
+                              <td className="p-1.5 text-xs text-right">
+                                {calculateCVR(monthStats?.iv, monthStats?.cdd)}
+                              </td>
+                              <td className="p-1.5 text-xs text-right">
+                                {calculateCustomCVR(monthStats?.iv, monthStats?.dbiv, monthStats?.cdd)}
+                              </td>
+                              <td className="p-1.5 text-xs text-right">
+                                {calculateIVPerCR(monthStats?.iv, monthStats?.cr)}
+                              </td>
                               <td className="p-1.5 text-xs text-right">{formatNumber(monthStats?.revenue)}</td>
                               <td className="p-1.5 text-xs text-right">{formatNumber(monthStats?.net_revenue)}</td>
                             </tr>
@@ -674,7 +778,7 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
                   <table className="border-r bg-muted/20">
                     <thead>
                       <tr className="text-left bg-muted">
-                        <th colSpan={8} className="p-1.5 text-xs font-medium text-center">
+                        <th colSpan={14} className="p-1.5 text-xs font-medium text-center">
                           YTD
                         </th>
                       </tr>
@@ -683,8 +787,14 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
                         <th className="p-1.5 whitespace-nowrap text-xs font-medium">CR</th>
                         <th className="p-1.5 whitespace-nowrap text-xs font-medium">CDD</th>
                         <th className="p-1.5 whitespace-nowrap text-xs font-medium">DBC</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">Comp</th>
                         <th className="p-1.5 whitespace-nowrap text-xs font-medium">IV</th>
                         <th className="p-1.5 whitespace-nowrap text-xs font-medium">DBI</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">Ctm IV</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">Min/IV</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">CVR</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">CVR(C)</th>
+                        <th className="p-1.5 whitespace-nowrap text-xs font-medium">IV/CR</th>
                         <th className="p-1.5 whitespace-nowrap text-xs font-medium">Rev</th>
                         <th className="p-1.5 whitespace-nowrap text-xs font-medium">NR</th>
                       </tr>
@@ -698,8 +808,36 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
                             <td className="p-1.5 text-xs text-right">{ytdStats?.cr || '-'}</td>
                             <td className="p-1.5 text-xs text-right">{ytdStats?.cdd || '-'}</td>
                             <td className="p-1.5 text-xs text-right">{ytdStats?.dbcdd || '-'}</td>
-                            <td className="p-1.5 text-xs text-right">{ytdStats?.iv || '-'}</td>
-                            <td className="p-1.5 text-xs text-right">{ytdStats?.dbiv || '-'}</td>
+                            <td className="p-1.5 text-xs text-right">
+                              {calculateCompletion(ytdStats?.cdd, ytdStats?.cr)}
+                            </td>
+                            <td className="p-1.5 text-xs text-right">
+                              <span className={getIVStyle(ytdStats?.iv || '-')}>
+                                {ytdStats?.iv || '-'}
+                              </span>
+                            </td>
+                            <td className="p-1.5 text-xs text-right">
+                              <span className={getDBIStyle(ytdStats?.dbiv || '-')}>
+                                {ytdStats?.dbiv || '-'}
+                              </span>
+                            </td>
+                            <td className="p-1.5 text-xs text-right">
+                              <span className={getCustomIVStyle(formatNumber(calculateCustomIV(ytdStats?.iv, ytdStats?.dbiv)) || '-')}>
+                                {formatNumber(calculateCustomIV(ytdStats?.iv, ytdStats?.dbiv))}
+                              </span>
+                            </td>
+                            <td className="p-1.5 text-xs text-right">
+                              {calculateMinPerIV(ytdStats?.total_duration, ytdStats?.iv)}
+                            </td>
+                            <td className="p-1.5 text-xs text-right">
+                              {calculateCVR(ytdStats?.iv, ytdStats?.cdd)}
+                            </td>
+                            <td className="p-1.5 text-xs text-right">
+                              {calculateCustomCVR(ytdStats?.iv, ytdStats?.dbiv, ytdStats?.cdd)}
+                            </td>
+                            <td className="p-1.5 text-xs text-right">
+                              {calculateIVPerCR(ytdStats?.iv, ytdStats?.cr)}
+                            </td>
                             <td className="p-1.5 text-xs text-right">{formatNumber(ytdStats?.revenue)}</td>
                             <td className="p-1.5 text-xs text-right">{formatNumber(ytdStats?.net_revenue)}</td>
                           </tr>

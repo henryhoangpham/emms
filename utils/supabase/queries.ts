@@ -904,6 +904,7 @@ export interface ClientCombineStatsResponse {
       net_revenue: number;
       pjt: number;
       cr: number;
+      total_duration: number;
     };
   }[];
   ytd_totals: {
@@ -917,6 +918,7 @@ export interface ClientCombineStatsResponse {
       net_revenue: number;
       pjt: number;
       cr: number;
+      total_duration: number;
     };
   };
 }

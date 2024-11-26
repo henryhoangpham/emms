@@ -306,7 +306,8 @@ BEGIN
       COUNT(CASE WHEN candidate_expert LIKE '%Expert%' THEN 1 END) as iv_count,
       COUNT(CASE WHEN channel LIKE '%DBExpert%' THEN 1 END) as dbiv_count,
       COUNT(CASE WHEN candidate_expert = 'Candidate' THEN 1 END) as cdd_count,
-      COUNT(CASE WHEN channel LIKE '%DBCDD%' THEN 1 END) as dbcdd_count,
+      COUNT(CASE WHEN channel LIKE '%DBCandidate%' THEN 1 END) as dbcdd_count,
+      SUM(CASE WHEN candidate_expert LIKE '%Expert%' THEN duration ELSE 0 END) as total_duration,
       SUM(CASE WHEN candidate_expert LIKE '%Expert%' THEN usd_actual_client_fee ELSE 0 END) as revenue,
       SUM(CASE WHEN candidate_expert LIKE '%Expert%' THEN usd_actual_net_revenue ELSE 0 END) as net_revenue
     FROM "MasterNew2024"
@@ -333,6 +334,7 @@ BEGIN
       SUM(COALESCE(ms.dbiv_count, 0)) AS dbiv_count,
       SUM(COALESCE(ms.cdd_count, 0)) AS cdd_count,
       SUM(COALESCE(ms.dbcdd_count, 0)) AS dbcdd_count,
+      SUM(COALESCE(ms.total_duration, 0)) AS total_duration,
       SUM(COALESCE(ms.revenue, 0)) AS revenue,
       SUM(COALESCE(ms.net_revenue, 0)) AS net_revenue,
       SUM(COALESCE(ps.pjt_count, 0)) AS pjt_count,
@@ -343,22 +345,30 @@ BEGIN
     WHERE oc."Client_Code_Name" = ANY(p_client_codes)
     GROUP BY oc."Client_Code_Name", COALESCE(ms.month, ps.month)
   ),
-  ytd_totals AS (
+  master_ytd AS (
     SELECT 
       true_client AS client_code,
       SUM(CASE WHEN candidate_expert LIKE '%Expert%' THEN 1 ELSE 0 END) as iv_count,
       SUM(CASE WHEN channel LIKE '%DBExpert%' THEN 1 ELSE 0 END) as dbiv_count,
       SUM(CASE WHEN candidate_expert = 'Candidate' THEN 1 ELSE 0 END) as cdd_count,
-      SUM(CASE WHEN channel LIKE '%DBCDD%' THEN 1 ELSE 0 END) as dbcdd_count,
+      SUM(CASE WHEN channel LIKE '%DBCandidate%' THEN 1 ELSE 0 END) as dbcdd_count,
+      SUM(CASE WHEN candidate_expert LIKE '%Expert%' THEN duration ELSE 0 END) as total_duration,
       SUM(CASE WHEN candidate_expert LIKE '%Expert%' THEN usd_actual_client_fee ELSE 0 END) as revenue,
-      SUM(CASE WHEN candidate_expert LIKE '%Expert%' THEN usd_actual_net_revenue ELSE 0 END) as net_revenue,
+      SUM(CASE WHEN candidate_expert LIKE '%Expert%' THEN usd_actual_net_revenue ELSE 0 END) as net_revenue
+    FROM "MasterNew2024"
+    WHERE true_client = ANY(p_client_codes)
+    AND monthly_id LIKE p_year || '%'
+    GROUP BY true_client
+  ),
+  pjt_ytd AS (
+    SELECT 
+      client AS client_code,
       SUM(CASE WHEN status = '1. On going' THEN 1 ELSE 0 END) as pjt_count,
       SUM(CASE WHEN status = '1. On going' THEN required_nr_of_calls ELSE 0 END) as cr_count
-    FROM "MasterNew2024" ms
-    LEFT JOIN "PJT" ps ON ms.true_client = ps.client
-    WHERE ms.true_client = ANY(p_client_codes)
-    AND ms.monthly_id LIKE p_year || '%'
-    GROUP BY true_client
+    FROM "PJT"
+    WHERE client = ANY(p_client_codes)
+    AND inquiry_month LIKE p_year || '%'
+    GROUP BY client
   )
   SELECT 
     am.client_code,
@@ -370,28 +380,32 @@ BEGIN
           'dbiv', COALESCE(am.dbiv_count, 0),
           'cdd', COALESCE(am.cdd_count, 0),
           'dbcdd', COALESCE(am.dbcdd_count, 0),
+          'total_duration', COALESCE(am.total_duration, 0),
           'revenue', COALESCE(am.revenue, 0),
           'net_revenue', COALESCE(am.net_revenue, 0),
           'pjt', COALESCE(am.pjt_count, 0),
           'cr', COALESCE(am.cr_count, 0)
         )
       )
+      ORDER BY am.month
     ) AS monthly_data,
     JSONB_BUILD_OBJECT(
       'year', p_year,
       'stats', JSONB_BUILD_OBJECT(
-        'iv', SUM(COALESCE(yt.iv_count, 0)),
-        'dbiv', SUM(COALESCE(yt.dbiv_count, 0)),
-        'cdd', SUM(COALESCE(yt.cdd_count, 0)),
-        'dbcdd', SUM(COALESCE(yt.dbcdd_count, 0)),
-        'revenue', SUM(COALESCE(yt.revenue, 0)),
-        'net_revenue', SUM(COALESCE(yt.net_revenue, 0)),
-        'pjt', SUM(COALESCE(yt.pjt_count, 0)),
-        'cr', SUM(COALESCE(yt.cr_count, 0))
+        'iv', COALESCE(my.iv_count, 0),
+        'dbiv', COALESCE(my.dbiv_count, 0),
+        'cdd', COALESCE(my.cdd_count, 0),
+        'dbcdd', COALESCE(my.dbcdd_count, 0),
+        'total_duration', COALESCE(my.total_duration, 0),
+        'revenue', COALESCE(my.revenue, 0),
+        'net_revenue', COALESCE(my.net_revenue, 0),
+        'pjt', COALESCE(py.pjt_count, 0),
+        'cr', COALESCE(py.cr_count, 0)
       )
     ) AS ytd_totals
   FROM aggregated_monthly am
-  LEFT JOIN ytd_totals yt ON am.client_code = yt.client_code
-  GROUP BY am.client_code, yt.client_code;
+  LEFT JOIN master_ytd my ON am.client_code = my.client_code
+  LEFT JOIN pjt_ytd py ON am.client_code = py.client_code
+  GROUP BY am.client_code, my.iv_count, my.dbiv_count, my.cdd_count, my.dbcdd_count, my.total_duration, my.revenue, my.net_revenue, py.pjt_count, py.cr_count;
 END;
 $$ LANGUAGE plpgsql;
