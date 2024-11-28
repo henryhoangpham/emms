@@ -192,6 +192,7 @@ BEGIN
 END;
 $$;
 
+
 CREATE OR REPLACE FUNCTION search_operational_clients(
     p_limit INT DEFAULT 10,
     p_offset INT DEFAULT 0,
@@ -241,7 +242,7 @@ BEGIN
             "OperationalClients"."AM",
             "OperationalClients"."PM",
             "OperationalClients"."Company_Segment",
-            "OperationalClients"."Existing_Account_Priority"
+            "OperationalClients"."_00_Existing_Account_Priority" AS "Existing_Account_Priority"
         FROM public."OperationalClients"
         WHERE (
             -- Invoice entity filter
@@ -262,7 +263,7 @@ BEGIN
         AND (
             -- Priorities filter
             ARRAY_LENGTH(p_priorities, 1) IS NULL OR 
-            "OperationalClients"."Existing_Account_Priority" = ANY(p_priorities)
+            "OperationalClients"."_00_Existing_Account_Priority" = ANY(p_priorities)
         )
         AND (
             -- Segments filter
@@ -297,6 +298,7 @@ BEGIN
     OFFSET p_offset;
 END;
 $$;
+
 
 CREATE OR REPLACE FUNCTION get_client_combine_stats(
   p_client_codes text[],
@@ -421,3 +423,147 @@ BEGIN
   GROUP BY am.client_code, my.iv_count, my.dbiv_count, my.cdd_count, my.dbcdd_count, my.total_duration, my.revenue, my.net_revenue, py.pjt_count, py.cr_count;
 END;
 $$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION get_client_combine_stats_unified(
+  p_client_codes text[],
+  p_year text DEFAULT TO_CHAR(CURRENT_DATE, 'YYYY')
+)
+RETURNS TABLE (
+  client_code text,
+  monthly_data jsonb[],
+  ytd_totals jsonb
+) AS $$
+DECLARE
+  master_table_name text;
+BEGIN
+  -- Set statement timeout
+  PERFORM set_config('statement_timeout', '600000', true);
+  
+  -- Determine which master table to use based on year
+  master_table_name := 'MasterNew' || p_year;
+  
+  -- Validate the year to prevent SQL injection
+  IF p_year NOT IN ('2023', '2024', '2025') THEN
+    RAISE EXCEPTION 'Invalid year. Only 2023, 2024 and 2025 are supported.';
+  END IF;
+
+  RETURN QUERY
+  EXECUTE format('
+    WITH master_stats_by_month AS (
+      SELECT 
+        true_client,
+        SUBSTRING(monthly_id, 1, 6) AS month,
+        COUNT(CASE WHEN candidate_expert LIKE ''%%Expert%%'' THEN 1 END) as iv_count,
+        COUNT(CASE WHEN channel LIKE ''%%DBExpert%%'' THEN 1 END) as dbiv_count,
+        COUNT(CASE WHEN candidate_expert = ''Candidate'' THEN 1 END) as cdd_count,
+        COUNT(CASE WHEN channel LIKE ''%%DBCandidate%%'' THEN 1 END) as dbcdd_count,
+        SUM(CASE WHEN candidate_expert LIKE ''%%Expert%%'' THEN duration ELSE 0 END) as total_duration,
+        SUM(CASE WHEN candidate_expert LIKE ''%%Expert%%'' THEN usd_actual_client_fee ELSE 0 END) as revenue,
+        SUM(CASE WHEN candidate_expert LIKE ''%%Expert%%'' THEN usd_actual_net_revenue ELSE 0 END) as net_revenue
+      FROM %I
+      WHERE true_client = ANY($1)
+      AND monthly_id LIKE $2 || ''%%''
+      GROUP BY true_client, SUBSTRING(monthly_id, 1, 6)
+    ),
+    pjt_stats_by_month AS (
+      SELECT 
+        client,
+        SUBSTRING(inquiry_month, 1, 6) AS month,
+        COUNT(CASE WHEN status = ''1. On going'' THEN 1 END) as pjt_count,
+        SUM(CASE WHEN status = ''1. On going'' THEN required_nr_of_calls ELSE 0 END) as cr_count
+      FROM "PJT"
+      WHERE client = ANY($1)
+      AND inquiry_month LIKE $2 || ''%%''
+      GROUP BY client, SUBSTRING(inquiry_month, 1, 6)
+    ),
+    aggregated_monthly AS (
+      SELECT 
+        oc."Client_Code_Name" AS client_code,
+        COALESCE(ms.month, ps.month) AS month,
+        SUM(COALESCE(ms.iv_count, 0)) AS iv_count,
+        SUM(COALESCE(ms.dbiv_count, 0)) AS dbiv_count,
+        SUM(COALESCE(ms.cdd_count, 0)) AS cdd_count,
+        SUM(COALESCE(ms.dbcdd_count, 0)) AS dbcdd_count,
+        SUM(COALESCE(ms.total_duration, 0)) AS total_duration,
+        SUM(COALESCE(ms.revenue, 0)) AS revenue,
+        SUM(COALESCE(ms.net_revenue, 0)) AS net_revenue,
+        SUM(COALESCE(ps.pjt_count, 0)) AS pjt_count,
+        SUM(COALESCE(ps.cr_count, 0)) AS cr_count
+      FROM "OperationalClients" oc
+      LEFT JOIN master_stats_by_month ms ON ms.true_client = oc."Client_Code_Name"
+      LEFT JOIN pjt_stats_by_month ps ON ps.client = oc."Client_Code_Name" AND ms.month = ps.month
+      WHERE oc."Client_Code_Name" = ANY($1)
+      GROUP BY oc."Client_Code_Name", COALESCE(ms.month, ps.month)
+    ),
+    master_ytd AS (
+      SELECT 
+        true_client AS client_code,
+        SUM(CASE WHEN candidate_expert LIKE ''%%Expert%%'' THEN 1 ELSE 0 END) as iv_count,
+        SUM(CASE WHEN channel LIKE ''%%DBExpert%%'' THEN 1 ELSE 0 END) as dbiv_count,
+        SUM(CASE WHEN candidate_expert = ''Candidate'' THEN 1 ELSE 0 END) as cdd_count,
+        SUM(CASE WHEN channel LIKE ''%%DBCandidate%%'' THEN 1 ELSE 0 END) as dbcdd_count,
+        SUM(CASE WHEN candidate_expert LIKE ''%%Expert%%'' THEN duration ELSE 0 END) as total_duration,
+        SUM(CASE WHEN candidate_expert LIKE ''%%Expert%%'' THEN usd_actual_client_fee ELSE 0 END) as revenue,
+        SUM(CASE WHEN candidate_expert LIKE ''%%Expert%%'' THEN usd_actual_net_revenue ELSE 0 END) as net_revenue
+      FROM %I
+      WHERE true_client = ANY($1)
+      AND monthly_id LIKE $2 || ''%%''
+      GROUP BY true_client
+    ),
+    pjt_ytd AS (
+      SELECT 
+        client AS client_code,
+        SUM(CASE WHEN status = ''1. On going'' THEN 1 ELSE 0 END) as pjt_count,
+        SUM(CASE WHEN status = ''1. On going'' THEN required_nr_of_calls ELSE 0 END) as cr_count
+      FROM "PJT"
+      WHERE client = ANY($1)
+      AND inquiry_month LIKE $2 || ''%%''
+      GROUP BY client
+    )
+    SELECT 
+      am.client_code,
+      ARRAY_AGG(
+        JSONB_BUILD_OBJECT(
+          ''month'', am.month,
+          ''stats'', JSONB_BUILD_OBJECT(
+            ''iv'', COALESCE(am.iv_count, 0),
+            ''dbiv'', COALESCE(am.dbiv_count, 0),
+            ''cdd'', COALESCE(am.cdd_count, 0),
+            ''dbcdd'', COALESCE(am.dbcdd_count, 0),
+            ''total_duration'', COALESCE(am.total_duration, 0),
+            ''revenue'', COALESCE(am.revenue, 0),
+            ''net_revenue'', COALESCE(am.net_revenue, 0),
+            ''pjt'', COALESCE(am.pjt_count, 0),
+            ''cr'', COALESCE(am.cr_count, 0)
+          )
+        )
+        ORDER BY am.month
+      ) AS monthly_data,
+      JSONB_BUILD_OBJECT(
+        ''year'', $2,
+        ''stats'', JSONB_BUILD_OBJECT(
+          ''iv'', COALESCE(my.iv_count, 0),
+          ''dbiv'', COALESCE(my.dbiv_count, 0),
+          ''cdd'', COALESCE(my.cdd_count, 0),
+          ''dbcdd'', COALESCE(my.dbcdd_count, 0),
+          ''total_duration'', COALESCE(my.total_duration, 0),
+          ''revenue'', COALESCE(my.revenue, 0),
+          ''net_revenue'', COALESCE(my.net_revenue, 0),
+          ''pjt'', COALESCE(py.pjt_count, 0),
+          ''cr'', COALESCE(py.cr_count, 0)
+        )
+      ) AS ytd_totals
+    FROM aggregated_monthly am
+    LEFT JOIN master_ytd my ON am.client_code = my.client_code
+    LEFT JOIN pjt_ytd py ON am.client_code = py.client_code
+    GROUP BY am.client_code, my.iv_count, my.dbiv_count, my.cdd_count, my.dbcdd_count, 
+             my.total_duration, my.revenue, my.net_revenue, py.pjt_count, py.cr_count
+  ', master_table_name, master_table_name)
+  USING p_client_codes, p_year;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Example usage:
+-- SELECT * FROM get_client_combine_stats_unified(ARRAY['L.E.K. SGP'], '2025');
+-- SELECT * FROM get_client_combine_stats_unified(ARRAY['L.E.K. SGP'], '2024');
+-- SELECT * FROM get_client_combine_stats_unified(ARRAY['Accenture Japan'], '2023');

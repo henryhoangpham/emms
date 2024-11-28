@@ -5,7 +5,7 @@ import { createClient } from '@/utils/supabase/client';
 import { User } from '@supabase/supabase-js';
 import { useToast } from '@/components/ui/use-toast';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { getOperationalClients, getClientCombineStatsUnified } from '@/utils/supabase/queries';
+import { getOperationalClients, getClientCombineStats2023 } from '@/utils/supabase/queries';
 import type { OperationalClientData, ClientCombineStatsResponse } from '@/utils/supabase/queries';
 import { Pagination } from '@/components/ui/pagination';
 import { DEFAULT_ITEMS_PER_PAGE } from '@/utils/constants';
@@ -52,16 +52,6 @@ const SEGMENT_OPTIONS = [
   "6. Recruiting Company"
 ] as const;
 
-// Add at the top with other constants
-const YEAR_OPTIONS = (() => {
-  const currentYear = new Date().getFullYear();
-  const years: string[] = [];
-  for (let year = 2023; year <= currentYear; year++) {
-    years.push(year.toString());
-  }
-  return years.reverse();
-})();
-
 interface ClientCombineStatsProps {
   user: User;
 }
@@ -87,10 +77,8 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
   const [statsError, setStatsError] = useState(false);
   const [selectedSegments, setSelectedSegments] = useState<string[]>([]);
   const [segmentSearchOpen, setSegmentSearchOpen] = useState(false);
-  const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
 
-  const fetchStats = useCallback(async (clientCodes: string[], year: string) => {
-    console.log('fetchStats:', year);
+  const fetchStats = useCallback(async (clientCodes: string[]) => {
     if (statsAbortController.current) {
       statsAbortController.current.abort();
     }
@@ -100,7 +88,8 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
     try {
       setStatsLoading(true);
       setStatsError(false);
-      const stats = await getClientCombineStatsUnified(supabase, clientCodes, year);
+      const stats = await getClientCombineStats2023(supabase, clientCodes, "2023");
+      console.log('2023 stats:', stats);
       
       const statsRecord = stats.reduce((acc, stat) => {
         acc[stat.client_code] = stat;
@@ -124,7 +113,7 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
     } finally {
       setStatsLoading(false);
     }
-  }, [supabase, toast, selectedYear]);
+  }, [supabase, toast]);
 
   const fetchData = useCallback(async (
     skipDebounce: boolean = false,
@@ -154,7 +143,7 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
 
         const clientCodes = operationalClients.map(client => client.client_code_name);
         if (clientCodes.length > 0) {
-          fetchStats(clientCodes, selectedYear);
+          fetchStats(clientCodes);
         }
       }
     } catch (error) {
@@ -280,20 +269,31 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
 
   // Get all unique months from all clients' data and sort them
   const getAllMonths = useCallback(() => {
-    const monthsSet = new Set<string>();
-    Object.values(statsData).forEach(clientStats => {
-      if (clientStats && clientStats.monthly_data) {
-        clientStats.monthly_data.forEach(monthData => {
-          if (monthData && monthData.month) {
-            monthsSet.add(monthData.month);
-          }
-        });
-      }
+    // For 2023, we want to show all months from December to January
+    const months2023 = [
+      '202312',
+      '202311',
+      '202310',
+      '202309',
+      '202308',
+      '202307',
+      '202306',
+      '202305',
+      '202304',
+      '202303',
+      '202302',
+      '202301'
+    ];
+
+    // Filter out months that don't have any data
+    return months2023.filter(month => {
+      return Object.values(statsData).some(clientStats => {
+        if (clientStats && clientStats.monthly_data) {
+          return clientStats.monthly_data.some(monthData => monthData?.month === month);
+        }
+        return false;
+      });
     });
-    return Array.from(monthsSet).sort((a, b) => {
-      if (!a || !b) return 0;
-      return b.localeCompare(a);
-    }); // Sort in descending order
   }, [statsData]);
 
   // Format month display
@@ -382,11 +382,9 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
         description: "Please wait while we prepare your data.",
       });
 
-      // Get all client codes from current data
       const clientCodes = data.map(client => client.client_code_name);
       
-      // Fetch stats for all clients
-      const stats = await getClientCombineStatsUnified(supabase, clientCodes, selectedYear);
+      const stats = await getClientCombineStats2023(supabase, clientCodes, "2023");
       
       // Define column order to match the display
       const clientInfoColumns = [
@@ -550,17 +548,6 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
     return "font-bold text-red-600 dark:text-red-400"; // Bold + red for Custom IV
   };
 
-  // Add year change handler
-  const handleYearChange = async (year: string) => {
-    console.log('handleYearChange:', year);
-    await setSelectedYear(year);
-    // Refetch data with new year
-    const clientCodes = data.map(client => client.client_code_name);
-    if (clientCodes.length > 0) {
-      fetchStats(clientCodes, year);
-    }
-  };
-
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -571,31 +558,17 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
     <div className="w-full">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Client Stats</CardTitle>
-          <div className="flex items-center gap-2">
-            <Select value={selectedYear} onValueChange={handleYearChange}>
-              <SelectTrigger className="w-[100px]">
-                <SelectValue>{selectedYear}</SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {YEAR_OPTIONS.map((year) => (
-                  <SelectItem key={year} value={year}>
-                    {year}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2"
-              onClick={handleExport}
-              disabled={loading || data.length === 0}
-            >
-              <Download className="h-4 w-4" />
-              Export
-            </Button>
-          </div>
+          <CardTitle>Client Stats 2023</CardTitle>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2"
+            onClick={handleExport}
+            disabled={loading || data.length === 0}
+          >
+            <Download className="h-4 w-4" />
+            Export
+          </Button>
         </CardHeader>
         <CardContent>
           <div className="mb-4 grid gap-4 grid-cols-1 md:grid-cols-2">
@@ -1005,7 +978,7 @@ export default function ClientCombineStats({ user }: ClientCombineStatsProps) {
             onClick={() => {
               const clientCodes = data.map(client => client.client_code_name);
               if (clientCodes.length > 0) {
-                fetchStats(clientCodes, selectedYear);
+                fetchStats(clientCodes);
               }
             }}
             title="Retry loading stats"

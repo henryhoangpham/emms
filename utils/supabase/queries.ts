@@ -940,3 +940,36 @@ export async function getClientCombineStats(
 
   return data as ClientCombineStatsResponse[];
 }
+
+
+export async function getClientCombineStats2023(
+  supabase: SupabaseClient,
+  clientCodes: string[],
+  year: string = new Date().getFullYear().toString()
+) {
+  const { data, error } = await supabase
+    .rpc('get_client_combine_stats_2023', {
+      p_client_codes: clientCodes,
+      p_year: year
+    });
+
+  if (error) throw error;
+
+  return data as ClientCombineStatsResponse[];
+}
+
+export async function getClientCombineStatsUnified(
+  supabase: SupabaseClient,
+  clientCodes: string[],
+  year: string = new Date().getFullYear().toString()
+) {
+  const { data, error } = await supabase
+    .rpc('get_client_combine_stats_unified', {
+      p_client_codes: clientCodes,
+      p_year: year
+    });
+
+  if (error) throw error;
+
+  return data as ClientCombineStatsResponse[];
+}

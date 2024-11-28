@@ -149,12 +149,22 @@ export function Sidebar({ onClose }: SidebarProps) {
             <Button 
               variant={pathname.startsWith('/client-stats') ? "secondary" : "ghost"} 
               className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
-              title="Client Stats 2024"
+              title="Client Stats"
             >
               <BarChart className="h-4 w-4" />
-              {isExpanded && <span className="ml-2">Client Stats 2024</span>}
+              {isExpanded && <span className="ml-2">Client Stats</span>}
             </Button>
           </Link>
+          {/* <Link href="/client-stats-2023">
+            <Button 
+              variant={pathname.startsWith('/client-stats-2023') ? "secondary" : "ghost"} 
+              className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
+              title="Client Stats 2023"
+            >
+              <BarChart className="h-4 w-4" />
+              {isExpanded && <span className="ml-2">Client Stats 2023</span>}
+            </Button>
+          </Link> */}
         </nav>
       </div>
     </aside>

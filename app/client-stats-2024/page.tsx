@@ -1,6 +1,6 @@
 import { createClient } from '@/utils/supabase/server';
 import { redirect } from 'next/navigation';
-import ClientCombineStats from '@/components/misc/ClientCombineStats';
+import ClientCombineStats2024 from '@/components/misc/ClientCombineStats2024';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 
 export default async function ClientStats2024Page() {
@@ -14,7 +14,7 @@ export default async function ClientStats2024Page() {
   return (
     <div className="h-screen">
       <DashboardLayout user={user}>
-        <ClientCombineStats user={user} />
+        <ClientCombineStats2024 user={user} />
       </DashboardLayout>
     </div>
   );
