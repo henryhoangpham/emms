@@ -65,15 +65,6 @@ export default function PJTDataList({ user }: PJTDataListProps) {
     currentStatuses?: string[]
   ) => {
     try {
-      console.log('fetchData: starting', {
-        skipDebounce,
-        currentPage,
-        itemsPerPage,
-        searchTerm: currentSearchTerm ?? searchTerm,
-        contractType: currentContractType ?? contractType,
-        selectedStatuses: currentStatuses ?? selectedStatuses
-      });
-      
       setLoading(true);
 
       // If no statuses are selected, use all statuses
@@ -103,7 +94,6 @@ export default function PJTDataList({ user }: PJTDataListProps) {
       });
     } finally {
       setLoading(false);
-      console.log('fetchData: finished');
     }
   }, [supabase, currentPage, itemsPerPage, searchTerm, contractType, selectedStatuses, toast]);
 
@@ -115,16 +105,13 @@ export default function PJTDataList({ user }: PJTDataListProps) {
     newStatuses?: string[]
   ) => {
     if (searchTimeoutRef.current) {
-      console.log('debouncedSearch: clearing timeout');
       clearTimeout(searchTimeoutRef.current);
     }
 
     searchTimeoutRef.current = setTimeout(() => {
-      console.log('debouncedSearch: executing search');
       setCurrentPage(1); // Reset to first page
       fetchData(true, newSearchTerm, newContractType, newStatuses);
       if (fromSearchInput && searchInputRef.current) {
-        console.log('debouncedSearch: focusing search input');
         searchInputRef.current.focus();
       }
       searchTimeoutRef.current = undefined;
@@ -165,14 +152,12 @@ export default function PJTDataList({ user }: PJTDataListProps) {
 
   // Handle pagination changes
   useEffect(() => {
-    console.log('Pagination effect triggered');
     // For pagination changes, fetch immediately
     fetchData(true);
   }, [currentPage, itemsPerPage]); // Remove fetchData from dependencies
 
   const handlePageChange = (page: number) => {
     if (page !== currentPage) {
-      console.log('Page changed to:', page);
       // Clear any pending debounced search
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current);
@@ -184,7 +169,6 @@ export default function PJTDataList({ user }: PJTDataListProps) {
 
   const handleItemsPerPageChange = (items: number) => {
     if (items !== itemsPerPage) { // Only update if items per page actually changes
-      console.log('Items per page changed to:', items);
       setItemsPerPage(items);
       setCurrentPage(1);
     }
@@ -192,7 +176,6 @@ export default function PJTDataList({ user }: PJTDataListProps) {
 
   // Initial load
   useEffect(() => {
-    console.log('Initial load');
     fetchData(true);
     return () => {
       if (searchTimeoutRef.current) {
@@ -211,7 +194,7 @@ export default function PJTDataList({ user }: PJTDataListProps) {
     <div className="w-full">
       <Card>
         <CardHeader>
-          <CardTitle>PJT Data List</CardTitle>
+          <CardTitle>PJT Data</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="mb-4 grid gap-4 grid-cols-1 md:grid-cols-2">

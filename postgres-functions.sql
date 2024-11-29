@@ -192,6 +192,143 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION search_masternew_unified(
+    p_limit INT DEFAULT 10,
+    p_offset INT DEFAULT 0,
+    p_date_from DATE DEFAULT NULL,
+    p_date_to DATE DEFAULT NULL,
+    p_candidate_expert TEXT[] DEFAULT NULL,
+    p_search_string TEXT DEFAULT '',
+    p_year TEXT DEFAULT TO_CHAR(CURRENT_DATE, 'YYYY')
+
+)
+RETURNS TABLE (
+    id TEXT,
+    exlink_expert_id BIGINT,
+    recruiter TEXT,
+    date DATE,
+    candidate_expert TEXT,
+    pjt TEXT,
+    channel TEXT,
+    name TEXT,
+    period_of_enrollment TEXT,
+    "position" TEXT,
+    linkedin TEXT,
+    proposed_currency TEXT,
+    duration BIGINT,
+    item_id TEXT,
+    currency_id TEXT,
+    expert_billing_data TEXT,
+    expert_billing_currency TEXT,
+    monthly_id TEXT,
+    actual_expert_fee DOUBLE PRECISION,
+    usd_actual_expert_fee DOUBLE PRECISION,
+    usd_actual_client_fee DOUBLE PRECISION,
+    usd_actual_net_revenue DOUBLE PRECISION,
+    true_client TEXT,
+    total_count BIGINT
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    master_table_name text;
+BEGIN
+    -- Validate the year to prevent SQL injection
+    IF p_year NOT IN ('2023', '2024', '2025') THEN
+        RAISE EXCEPTION 'Invalid year. Only 2023, 2024 and 2025 are supported.';
+    END IF;
+
+    -- Determine which master table to use based on year
+    master_table_name := 'MasterNew' || p_year;
+
+    RETURN QUERY
+    EXECUTE format('
+        WITH filtered_data AS (
+            SELECT 
+                id,
+                exlink_expert_id,
+                recruiter,
+                date,
+                candidate_expert,
+                pjt,
+                channel,
+                name,
+                period_of_enrollment,
+                "position",
+                linkedin,
+                proposed_currency,
+                duration,
+                item_id,
+                currency_id,
+                expert_billing_data,
+                expert_billing_currency,
+                monthly_id,
+                actual_expert_fee,
+                usd_actual_expert_fee,
+                usd_actual_client_fee,
+                usd_actual_net_revenue,
+                true_client
+            FROM public.%I
+            WHERE (
+                -- Date range filter
+                ($1 IS NULL OR date >= $1) AND
+                ($2 IS NULL OR date <= $2)
+            )
+            AND (
+                -- Candidate/Expert filter
+                $3 IS NULL OR
+                candidate_expert = ANY($3)
+            )
+            AND (
+                -- Search term filter
+                $4 = '''' OR
+                recruiter ILIKE ''%%'' || $4 || ''%%'' OR
+                pjt ILIKE ''%%'' || $4 || ''%%'' OR
+                "position" ILIKE ''%%'' || $4 || ''%%'' OR
+                name ILIKE ''%%'' || $4 || ''%%''
+            )
+        ),
+        total AS (
+            SELECT COUNT(*) AS total_count FROM filtered_data
+        )
+        SELECT 
+            fd.id,
+            fd.exlink_expert_id,
+            fd.recruiter,
+            fd.date,
+            fd.candidate_expert,
+            fd.pjt,
+            fd.channel,
+            fd.name,
+            fd.period_of_enrollment,
+            fd.position,
+            fd.linkedin,
+            fd.proposed_currency,
+            fd.duration,
+            fd.item_id,
+            fd.currency_id,
+            fd.expert_billing_data,
+            fd.expert_billing_currency,
+            fd.monthly_id,
+            fd.actual_expert_fee,
+            fd.usd_actual_expert_fee,
+            fd.usd_actual_client_fee,
+            fd.usd_actual_net_revenue,
+            fd.true_client,
+            t.total_count
+        FROM filtered_data fd, total t
+        ORDER BY fd.date DESC
+        LIMIT $5
+        OFFSET $6;
+    ', master_table_name)
+    USING p_date_from, p_date_to, p_candidate_expert, p_search_string, p_limit, p_offset;
+END;
+$$;
+
+-- Example usage:
+-- SELECT * FROM search_masternew_unified(10, 0, '2024-01-01', '2024-01-31', ARRAY['Expert'], 'hana');
+-- SELECT * FROM search_masternew_unified(10, 0, '2023-01-01', '2023-12-31', ARRAY['Expert'], 'h', '2023');
+-- SELECT * FROM search_masternew_unified(10, 0, '2025-01-01', '2025-01-31', ARRAY['Candidate'], '');
 
 CREATE OR REPLACE FUNCTION search_operational_clients(
     p_limit INT DEFAULT 10,

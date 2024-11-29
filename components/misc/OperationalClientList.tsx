@@ -83,15 +83,6 @@ export default function OperationalClientList({ user }: OperationalClientListPro
     currentSegments?: string[]
   ) => {
     try {
-      console.log('fetchData: starting', {
-        skipDebounce,
-        currentPage,
-        itemsPerPage,
-        searchTerm: currentSearchTerm ?? searchTerm,
-        invoiceEntity: currentInvoiceEntity ?? invoiceEntity,
-        contractType: currentContractType ?? contractType,
-      });
-      
       setLoading(true);
       
       const { operationalClients, count } = await getOperationalClients(
@@ -105,7 +96,6 @@ export default function OperationalClientList({ user }: OperationalClientListPro
         currentSegments ?? selectedSegments
       );
 
-      console.log('fetchData: operationalClients', operationalClients);
       if (operationalClients) {
         setData(operationalClients);
         setTotalItems(count || 0);
@@ -119,7 +109,6 @@ export default function OperationalClientList({ user }: OperationalClientListPro
       });
     } finally {
       setLoading(false);
-      console.log('fetchData: finished');
     }
   }, [supabase, currentPage, itemsPerPage, searchTerm, invoiceEntity, contractType, selectedPriorities, selectedSegments, toast]);
 
@@ -132,16 +121,13 @@ export default function OperationalClientList({ user }: OperationalClientListPro
     newSegments?: string[]
   ) => {
     if (searchTimeoutRef.current) {
-      console.log('debouncedSearch: clearing timeout');
       clearTimeout(searchTimeoutRef.current);
     }
 
     searchTimeoutRef.current = setTimeout(() => {
-      console.log('debouncedSearch: executing search');
       setCurrentPage(1);
       fetchData(true, newSearchTerm, newInvoiceEntity, newContractType, newPriorities, newSegments);
       if (fromSearchInput && searchInputRef.current) {
-        console.log('debouncedSearch: focusing search input');
         searchInputRef.current.focus();
       }
       searchTimeoutRef.current = undefined;
@@ -201,7 +187,6 @@ export default function OperationalClientList({ user }: OperationalClientListPro
   };
 
   useEffect(() => {
-    console.log('Initial load');
     fetchData(true);
     return () => {
       if (searchTimeoutRef.current) {
@@ -211,7 +196,6 @@ export default function OperationalClientList({ user }: OperationalClientListPro
   }, []);
 
   useEffect(() => {
-    console.log('Pagination effect triggered');
     fetchData(true);
   }, [currentPage, itemsPerPage]);
 

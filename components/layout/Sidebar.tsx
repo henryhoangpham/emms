@@ -132,7 +132,7 @@ export function Sidebar({ onClose }: SidebarProps) {
               title="Master Data 2024"
             >
               <Database className="h-4 w-4" />
-              {isExpanded && <span className="ml-2">Master Data 2024</span>}
+              {isExpanded && <span className="ml-2">Master Data</span>}
             </Button>
           </Link>
           <Link href="/operational-clients">

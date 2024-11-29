@@ -973,3 +973,39 @@ export async function getClientCombineStatsUnified(
 
   return data as ClientCombineStatsResponse[];
 }
+
+
+export async function getMasterDataUnified(
+  supabase: SupabaseClient,
+  page: number = 1,
+  limit: number = 10,
+  dateFrom?: string | null,
+  dateTo?: string | null,
+  candidateExperts?: string[] | null,
+  searchString: string = '',
+  year: string = new Date().getFullYear().toString()
+) {
+  const offset = (page - 1) * limit;
+
+  // Validate dates before sending to API
+  const validDateFrom = dateFrom && dateFrom.trim() !== '' ? dateFrom : null;
+  const validDateTo = dateTo && dateTo.trim() !== '' ? dateTo : null;
+
+  const { data, error } = await supabase
+    .rpc('search_masternew_unified', {
+      p_limit: limit,
+      p_offset: offset,
+      p_date_from: validDateFrom,
+      p_date_to: validDateTo,
+      p_candidate_expert: candidateExperts,
+      p_search_string: searchString,
+      p_year: year
+    });
+
+  if (error) throw error;
+
+  return {
+    masterData: data as MasterData[],
+    count: data?.[0]?.total_count || 0
+  };
+}

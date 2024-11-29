@@ -6,11 +6,11 @@ import { User } from '@supabase/supabase-js';
 import { useToast } from '@/components/ui/use-toast';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { format } from 'date-fns';
-import { getMasterData } from '@/utils/supabase/queries';
+import { getMasterDataUnified } from '@/utils/supabase/queries';
 import { Pagination } from '@/components/ui/pagination';
 import { DEFAULT_ITEMS_PER_PAGE } from '@/utils/constants';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, X, Check } from 'lucide-react';
+import { ChevronDown, X, Check, Download } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -18,6 +18,7 @@ import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem } from "
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/utils/cn";
 import { TableWrapper } from '@/components/ui/table-wrapper';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 const RECORD_TYPES = [
   'Candidate',
@@ -31,6 +32,15 @@ const RECORD_TYPES = [
   'ES: Survey',
   'Others'
 ] as const;
+
+const YEAR_OPTIONS = (() => {
+  const currentYear = new Date().getFullYear();
+  const years: string[] = [];
+  for (let year = 2023; year <= currentYear; year++) {
+    years.push(year.toString());
+  }
+  return years.reverse();
+})();
 
 interface MasterDataListProps {
   user: User;
@@ -47,6 +57,7 @@ export default function MasterDataList({ user }: MasterDataListProps) {
   const [dateTo, setDateTo] = useState<string>('');
   const [selectedRecordTypes, setSelectedRecordTypes] = useState<string[]>([]);
   const [recordTypeSearchOpen, setRecordTypeSearchOpen] = useState(false);
+  const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
   const { toast } = useToast();
   const supabase = createClient();
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -57,22 +68,12 @@ export default function MasterDataList({ user }: MasterDataListProps) {
     currentSearchTerm?: string,
     currentDateFrom?: string,
     currentDateTo?: string,
-    currentRecordTypes?: string[]
+    currentRecordTypes?: string[],
+    currentYear?: string
   ) => {
     try {
-      console.log('fetchData: starting', {
-        skipDebounce,
-        currentPage,
-        itemsPerPage,
-        searchTerm: currentSearchTerm ?? searchTerm,
-        dateFrom: currentDateFrom ?? dateFrom,
-        dateTo: currentDateTo ?? dateTo,
-        recordTypes: currentRecordTypes ?? selectedRecordTypes
-      });
-      
       setLoading(true);
       
-      // If no record types are selected, use all record types
       const effectiveRecordTypes = (currentRecordTypes ?? selectedRecordTypes).length === 0 
         ? [...RECORD_TYPES] 
         : (currentRecordTypes ?? selectedRecordTypes);
@@ -80,14 +81,15 @@ export default function MasterDataList({ user }: MasterDataListProps) {
       const validDateFrom = (currentDateFrom ?? dateFrom)?.trim() || null;
       const validDateTo = (currentDateTo ?? dateTo)?.trim() || null;
 
-      const { masterData, count } = await getMasterData(
+      const { masterData, count } = await getMasterDataUnified(
         supabase,
         currentPage,
         itemsPerPage,
         validDateFrom,
         validDateTo,
         effectiveRecordTypes,
-        currentSearchTerm ?? searchTerm
+        currentSearchTerm ?? searchTerm,
+        currentYear ?? selectedYear
       );
       
       if (masterData) {
@@ -103,9 +105,8 @@ export default function MasterDataList({ user }: MasterDataListProps) {
       });
     } finally {
       setLoading(false);
-      console.log('fetchData: finished');
     }
-  }, [supabase, currentPage, itemsPerPage, searchTerm, dateFrom, dateTo, selectedRecordTypes, toast]);
+  }, [supabase, currentPage, itemsPerPage, searchTerm, dateFrom, dateTo, selectedRecordTypes, selectedYear]);
 
   // Debounced search function
   const debouncedSearch = useCallback((
@@ -113,19 +114,17 @@ export default function MasterDataList({ user }: MasterDataListProps) {
     newSearchTerm?: string,
     newDateFrom?: string,
     newDateTo?: string,
-    newRecordTypes?: string[]
+    newRecordTypes?: string[],
+    newYear?: string
   ) => {
     if (searchTimeoutRef.current) {
-      console.log('debouncedSearch: clearing timeout');
       clearTimeout(searchTimeoutRef.current);
     }
 
     searchTimeoutRef.current = setTimeout(() => {
-      console.log('debouncedSearch: executing search');
       setCurrentPage(1); // Reset to first page
-      fetchData(true, newSearchTerm, newDateFrom, newDateTo, newRecordTypes);
+      fetchData(true, newSearchTerm, newDateFrom, newDateTo, newRecordTypes, newYear);
       if (fromSearchInput && searchInputRef.current) {
-        console.log('debouncedSearch: focusing search input');
         searchInputRef.current.focus();
       }
       searchTimeoutRef.current = undefined;
@@ -135,19 +134,19 @@ export default function MasterDataList({ user }: MasterDataListProps) {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setSearchTerm(newValue);
-    debouncedSearch(true, newValue, dateFrom, dateTo, selectedRecordTypes);
+    debouncedSearch(true, newValue, dateFrom, dateTo, selectedRecordTypes, selectedYear);
   };
 
   const handleDateFromChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setDateFrom(newValue);
-    debouncedSearch(false, searchTerm, newValue, dateTo, selectedRecordTypes);
+    debouncedSearch(false, searchTerm, newValue, dateTo, selectedRecordTypes, selectedYear);
   };
 
   const handleDateToChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setDateTo(newValue);
-    debouncedSearch(false, searchTerm, dateFrom, newValue, selectedRecordTypes);
+    debouncedSearch(false, searchTerm, dateFrom, newValue, selectedRecordTypes, selectedYear);
   };
 
   const handleRecordTypeSelect = (recordType: string) => {
@@ -155,7 +154,7 @@ export default function MasterDataList({ user }: MasterDataListProps) {
       const newTypes = current.includes(recordType)
         ? current.filter(t => t !== recordType)
         : [...current, recordType];
-      debouncedSearch(false, searchTerm, dateFrom, dateTo, newTypes);
+      debouncedSearch(false, searchTerm, dateFrom, dateTo, newTypes, selectedYear);
       return newTypes;
     });
   };
@@ -163,14 +162,97 @@ export default function MasterDataList({ user }: MasterDataListProps) {
   const removeRecordType = (recordType: string) => {
     setSelectedRecordTypes(current => {
       const newTypes = current.filter(t => t !== recordType);
-      debouncedSearch(false, searchTerm, dateFrom, dateTo, newTypes);
+      debouncedSearch(false, searchTerm, dateFrom, dateTo, newTypes, selectedYear);
       return newTypes;
     });
   };
 
+  const handleYearChange = (year: string) => {
+    setSelectedYear(year);
+    debouncedSearch(false, searchTerm, dateFrom, dateTo, selectedRecordTypes, year);
+  };
+
+  const handleExport = async () => {
+    try {
+      setLoading(true);
+      toast({
+        title: "Exporting...",
+        description: "Please wait while we prepare your data.",
+      });
+
+      const { masterData } = await getMasterDataUnified(
+        supabase,
+        1,
+        1000000, // Large number to get all records
+        dateFrom,
+        dateTo,
+        selectedRecordTypes,
+        searchTerm,
+        selectedYear
+      );
+
+      if (!masterData) throw new Error('No data to export');
+
+      const columns = [
+        'Date',
+        'Record Type',
+        'Project',
+        'Channel',
+        'Client',
+        'Expert Fee',
+        'USD Expert Fee',
+        'USD Client Fee',
+        'USD Net Revenue',
+        'Recruiter',
+        'Expert Name',
+        'Position'
+      ];
+
+      const csvData = [
+        columns.join(','),
+        ...masterData.map(item => [
+          item.date ? format(new Date(item.date), 'dd/MM/yyyy') : '-',
+          item.candidate_expert || '-',
+          `"${item.pjt || '-'}"`,
+          item.channel || '-',
+          `"${item.true_client || '-'}"`,
+          item.actual_expert_fee ? `${item.proposed_currency} ${item.actual_expert_fee.toFixed(2)}` : '-',
+          item.usd_actual_expert_fee ? item.usd_actual_expert_fee.toFixed(2) : '-',
+          item.usd_actual_client_fee ? item.usd_actual_client_fee.toFixed(2) : '-',
+          item.usd_actual_net_revenue ? item.usd_actual_net_revenue.toFixed(2) : '-',
+          `"${item.recruiter || '-'}"`,
+          `"${item.name || '-'}"`,
+          `"${item.position || '-'}"`
+        ].join(','))
+      ].join('\n');
+
+      const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `master_data_${selectedYear}_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast({
+        title: "Export Complete",
+        description: "Your data has been exported successfully.",
+      });
+    } catch (error) {
+      console.error('Export error:', error);
+      toast({
+        title: "Export Failed",
+        description: "There was an error exporting your data. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Initial load
   useEffect(() => {
-    console.log('Initial load');
     fetchData(true);
     return () => {
       if (searchTimeoutRef.current) {
@@ -181,7 +263,6 @@ export default function MasterDataList({ user }: MasterDataListProps) {
 
   // Handle pagination changes
   useEffect(() => {
-    console.log('Pagination effect triggered');
     fetchData(true);
   }, [currentPage, itemsPerPage]);
 
@@ -194,8 +275,32 @@ export default function MasterDataList({ user }: MasterDataListProps) {
   return (
     <div className="w-full">
       <Card>
-        <CardHeader>
-          <CardTitle>Master Data List</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Master Data</CardTitle>
+          <div className="flex items-center gap-2">
+            <Select value={selectedYear} onValueChange={handleYearChange}>
+              <SelectTrigger className="w-[100px]">
+                <SelectValue>{selectedYear}</SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {YEAR_OPTIONS.map((year) => (
+                  <SelectItem key={year} value={year}>
+                    {year}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+              onClick={handleExport}
+              disabled={loading || data.length === 0}
+            >
+              <Download className="h-4 w-4" />
+              Export
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="mb-4 grid gap-4 grid-cols-1 md:grid-cols-2">
