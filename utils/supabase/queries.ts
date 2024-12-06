@@ -765,6 +765,7 @@ interface MasterData {
   usd_actual_client_fee: number;
   usd_actual_net_revenue: number;
   true_client: string;
+  status: string;
 }
 
 export async function getMasterData(
@@ -1008,4 +1009,112 @@ export async function getMasterDataUnified(
     masterData: data as MasterData[],
     count: data?.[0]?.total_count || 0
   };
+}
+
+// KPI Report Interfaces
+export interface CompanyKPIResponse {
+  date: string;
+  call_request_all: number;
+  call_request_actual: number;
+  // call_request_actual_accum: number;
+  // call_request_achievement: number;
+  candidate_actual: number;
+  candidate_actual_from_db: number;
+  // candidate_actual_accum: number;
+  // candidate_achievement: number;
+  expert_actual: number;
+  // expert_actual_accum: number;
+  // expert_achievement: number;
+  revenue: number;
+  // revenue_accum: number;
+  // revenue_achievement: number;
+  net_revenue: number;
+  // net_revenue_accum: number;
+  // net_revenue_achievement: number;
+}
+
+export interface MemberKPIResponse {
+  member_name: string;
+  department: string;
+  target: number;
+  actual: number;
+  achievement_rate: number;
+  ytd_target: number;
+  ytd_actual: number;
+  ytd_achievement_rate: number;
+}
+
+export interface RecMngtKPIResponse {
+  recruiter: string;
+  target_interviews: number;
+  actual_interviews: number;
+  achievement_rate: number;
+  conversion_rate: number;
+  ytd_target: number;
+  ytd_actual: number;
+  ytd_achievement_rate: number;
+}
+
+export interface AccountKPIResponse {
+  account_manager: string;
+  target_revenue: number;
+  actual_revenue: number;
+  achievement_rate: number;
+  client_satisfaction: number;
+  ytd_target: number;
+  ytd_actual: number;
+  ytd_achievement_rate: number;
+}
+
+// KPI Report Queries
+export async function getCompanyKPI(
+  supabase: SupabaseClient,
+  yyyymm: string
+): Promise<CompanyKPIResponse[]> {
+  const { data, error } = await supabase
+    .rpc('get_company_kpi', {
+      p_yyyymm: yyyymm
+    });
+
+  if (error) throw error;
+  return data;
+}
+
+export async function getMemberKPI(
+  supabase: SupabaseClient,
+  yyyymm: string
+): Promise<MemberKPIResponse[]> {
+  const { data, error } = await supabase
+    .rpc('get_member_kpi', {
+      p_yyyymm: yyyymm
+    });
+
+  if (error) throw error;
+  return data;
+}
+
+export async function getRecMngtKPI(
+  supabase: SupabaseClient,
+  yyyymm: string
+): Promise<RecMngtKPIResponse[]> {
+  const { data, error } = await supabase
+    .rpc('get_rec_mngt_kpi', {
+      p_yyyymm: yyyymm
+    });
+
+  if (error) throw error;
+  return data;
+}
+
+export async function getAccountKPI(
+  supabase: SupabaseClient,
+  yyyymm: string
+): Promise<AccountKPIResponse[]> {
+  const { data, error } = await supabase
+    .rpc('get_account_kpi', {
+      p_yyyymm: yyyymm
+    });
+
+  if (error) throw error;
+  return data;
 }

@@ -704,3 +704,105 @@ $$ LANGUAGE plpgsql;
 -- SELECT * FROM get_client_combine_stats_unified(ARRAY['L.E.K. SGP'], '2025');
 -- SELECT * FROM get_client_combine_stats_unified(ARRAY['L.E.K. SGP'], '2024');
 -- SELECT * FROM get_client_combine_stats_unified(ARRAY['Accenture Japan'], '2023');
+
+CREATE OR REPLACE FUNCTION get_company_kpi(
+    p_yyyymm text
+)
+RETURNS TABLE (
+    date date,
+    call_request_all int,
+    call_request_actual int,
+    candidate_actual int,
+    candidate_actual_from_db int,
+    expert_actual int,
+    revenue float8,
+    net_revenue float8
+) AS $$
+DECLARE
+    v_year int;
+    v_month int;
+    v_start_date date;
+    master_table_name text;
+BEGIN
+    -- Extract year and month from p_yyyymm
+    v_year := CAST(substring(p_yyyymm from 1 for 4) AS int);
+    v_month := CAST(substring(p_yyyymm from 5 for 2) AS int);
+    v_start_date := make_date(v_year, v_month, 1);
+    
+    -- Determine which master table to use
+    master_table_name := 'MasterNew' || v_year;
+
+    -- Validate the year
+    IF v_year NOT IN (2023, 2024, 2025) THEN
+        RAISE EXCEPTION 'Invalid year. Only 2023, 2024 and 2025 are supported.';
+    END IF;
+
+    RETURN QUERY EXECUTE format('
+        WITH dates AS (
+            -- Generate all dates for the month
+            SELECT generate_series(
+                %L::date,
+                (%L::date + interval ''1 month'' - interval ''1 day'')::date,
+                interval ''1 day''
+            )::date AS date
+        ),
+        call_requests AS (
+            -- Calculate call_request_all and call_request_actual
+            SELECT 
+                inquiry_date::date AS date,
+                SUM(CASE WHEN am <> ''Yuasa Tomoyuki'' THEN COALESCE(required_nr_of_calls, 0) ELSE 0 END)::int AS call_request_all,
+                SUM(CASE 
+                    WHEN am <> ''Yuasa Tomoyuki'' 
+                         AND status NOT IN (''0.Proposal'', ''5. Proposal Lost'') 
+                    THEN COALESCE(required_nr_of_calls, 0) 
+                    ELSE 0 
+                END)::int AS call_request_actual
+            FROM "PJT"
+            WHERE EXTRACT(YEAR FROM inquiry_date) = $1
+            AND EXTRACT(MONTH FROM inquiry_date) = $2
+            GROUP BY inquiry_date::date
+        ),
+        candidates AS (
+            -- Get daily candidate counts (all and filtered)
+            SELECT 
+                date::date,
+                COUNT(*) FILTER (WHERE channel <> ''DBCandidate'')::int AS daily_actual_count,
+                COUNT(*) FILTER (WHERE channel = ''DBCandidate'')::int AS daily_actual_from_db_count
+            FROM %I
+            WHERE EXTRACT(YEAR FROM date) = $1
+            AND EXTRACT(MONTH FROM date) = $2
+            AND candidate_expert = ''Candidate''
+            AND status NOT IN (''0.Proposal'', ''5. Proposal Lost'')
+            GROUP BY date::date
+        ),
+        experts AS (
+            -- Get daily expert counts
+            SELECT 
+                date::date,
+                COUNT(*)::int AS expert_count,
+                SUM(COALESCE(usd_actual_client_fee, 0.0))::float8 AS daily_revenue,
+                SUM(COALESCE(usd_actual_net_revenue, 0.0))::float8 AS daily_net_revenue
+            FROM %I
+            WHERE EXTRACT(YEAR FROM date) = $1
+            AND EXTRACT(MONTH FROM date) = $2
+            AND candidate_expert LIKE ''%%Expert%%''
+            GROUP BY date::date
+        )
+        SELECT 
+            d.date,
+            COALESCE(cr.call_request_all, 0)::int AS call_request_all,
+            COALESCE(cr.call_request_actual, 0)::int AS call_request_actual,
+            COALESCE(c.daily_actual_count, 0)::int AS candidate_actual,
+            COALESCE(c.daily_actual_from_db_count, 0)::int AS candidate_actual_from_db,
+            COALESCE(e.expert_count, 0)::int AS expert_actual,
+            COALESCE(e.daily_revenue, 0.0)::float8 AS revenue,
+            COALESCE(e.daily_net_revenue, 0.0)::float8 AS net_revenue
+        FROM dates d
+        LEFT JOIN call_requests cr ON d.date = cr.date
+        LEFT JOIN candidates c ON d.date = c.date
+        LEFT JOIN experts e ON d.date = e.date
+        ORDER BY d.date;
+    ', v_start_date, v_start_date, master_table_name, master_table_name)
+    USING v_year, v_month;
+END;
+$$ LANGUAGE plpgsql;

@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from "@/components/ui/button";
-import { Users, Briefcase, X, ChevronLeft, ChevronRight, Calendar, FolderTree, BookOpen, Database, BarChart } from "lucide-react";
+import { Users, Briefcase, X, ChevronLeft, ChevronRight, Calendar, FolderTree, BookOpen, Database, BarChart, LineChart } from "lucide-react";
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Logo } from './Logo';
@@ -165,6 +165,57 @@ export function Sidebar({ onClose }: SidebarProps) {
               {isExpanded && <span className="ml-2">Client Stats 2023</span>}
             </Button>
           </Link> */}
+
+          {/* KPI Section */}
+          <div className="pt-2 border-t">
+            <div className="text-sm text-muted-foreground px-2 py-1">
+              {isExpanded && "KPI Reports"}
+            </div>
+            
+            <Link href="/kpi/company">
+              <Button 
+                variant={pathname === '/kpi/company' ? "secondary" : "ghost"} 
+                className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
+                title="Company KPI"
+              >
+                <LineChart className="h-4 w-4" />
+                {isExpanded && <span className="ml-2">Company</span>}
+              </Button>
+            </Link>
+
+            <Link href="/kpi/member">
+              <Button 
+                variant={pathname === '/kpi/member' ? "secondary" : "ghost"} 
+                className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
+                title="Member KPI"
+              >
+                <LineChart className="h-4 w-4" />
+                {isExpanded && <span className="ml-2">Member</span>}
+              </Button>
+            </Link>
+
+            <Link href="/kpi/rec-mngt">
+              <Button 
+                variant={pathname === '/kpi/rec-mngt' ? "secondary" : "ghost"} 
+                className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
+                title="Rec Mngt KPI"
+              >
+                <LineChart className="h-4 w-4" />
+                {isExpanded && <span className="ml-2">Rec Mngt</span>}
+              </Button>
+            </Link>
+
+            <Link href="/kpi/account">
+              <Button 
+                variant={pathname === '/kpi/account' ? "secondary" : "ghost"} 
+                className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
+                title="Account KPI"
+              >
+                <LineChart className="h-4 w-4" />
+                {isExpanded && <span className="ml-2">Account</span>}
+              </Button>
+            </Link>
+          </div>
         </nav>
       </div>
     </aside>
