@@ -299,7 +299,16 @@ export default function CompanyKPIReport({ user }: CompanyKPIReportProps) {
 
   const getRowClassName = useCallback((data: CompanyKPIData) => {
     const date = new Date(data.date);
-    return isWeekend(date) ? 'bg-muted/30' : '';
+    const today = new Date();
+    const isToday = format(date, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd');
+    
+    if (isToday) {
+      // Use the main theme color with opacity for today's row
+      return 'bg-primary/20';
+    }
+    
+    // Make weekends darker than before
+    return isWeekend(date) ? 'bg-muted/90' : '';
   }, []);
 
   return (
