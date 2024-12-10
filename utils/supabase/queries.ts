@@ -1118,3 +1118,77 @@ export async function getAccountKPI(
   if (error) throw error;
   return data;
 }
+
+export interface TeamMember {
+  email: string;
+  nick: string;
+  name: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export async function getTeamMembers(
+  supabase: SupabaseClient,
+  page: number = 1,
+  limit: number = 10
+): Promise<{ members: TeamMember[]; count: number }> {
+  const offset = (page - 1) * limit;
+
+  const [{ data: members, error }, { count, error: countError }] = await Promise.all([
+    supabase
+      .from('TeamMembers')
+      .select('*')
+      .order('email')
+      .range(offset, offset + limit - 1),
+    supabase
+      .from('TeamMembers')
+      .select('*', { count: 'exact', head: true })
+  ]);
+
+  if (error) throw error;
+  if (countError) throw countError;
+
+  return {
+    members: members as TeamMember[],
+    count: count || 0
+  };
+}
+
+export async function getTeamMember(
+  supabase: SupabaseClient,
+  email: string
+): Promise<TeamMember | null> {
+  const { data, error } = await supabase
+    .from('TeamMembers')
+    .select('*')
+    .eq('email', email)
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function updateTeamMember(
+  supabase: SupabaseClient,
+  email: string,
+  updates: Partial<TeamMember>
+): Promise<void> {
+  const { error } = await supabase
+    .from('TeamMembers')
+    .update(updates)
+    .eq('email', email);
+
+  if (error) throw error;
+}
+
+export async function deleteTeamMember(
+  supabase: SupabaseClient,
+  email: string
+): Promise<void> {
+  const { error } = await supabase
+    .from('TeamMembers')
+    .delete()
+    .eq('email', email);
+
+  if (error) throw error;
+}

@@ -216,6 +216,65 @@ export function Sidebar({ onClose }: SidebarProps) {
               </Button>
             </Link>
           </div>
+
+          {/* Invoice Section */}
+          <div className="pt-2 border-t">
+            <div className="text-sm text-muted-foreground px-2 py-1">
+              {isExpanded && "Invoice"}
+            </div>
+            
+            <Link href="/invoice/monthly">
+              <Button 
+                variant={pathname === '/invoice/monthly' ? "secondary" : "ghost"} 
+                className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
+                title="Monthly Invoice"
+              >
+                <LineChart className="h-4 w-4" />
+                {isExpanded && <span className="ml-2">Monthly</span>}
+              </Button>
+            </Link>
+
+            <Link href="/invoice/payg">
+              <Button 
+                variant={pathname === '/invoice/payg' ? "secondary" : "ghost"} 
+                className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
+                title="PayG Invoice"
+              >
+                <LineChart className="h-4 w-4" />
+                {isExpanded && <span className="ml-2">PayG</span>}
+              </Button>
+            </Link>
+          </div>
+
+          {/* Settings Section */}
+          <div className="pt-2 border-t">
+            <div className="text-sm text-muted-foreground px-2 py-1">
+              {isExpanded && "Settings"}
+            </div>
+            
+            <Link href="/settings/kpi">
+              <Button 
+                variant={pathname === '/settings/kpi' ? "secondary" : "ghost"} 
+                className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
+                title="KPI Settings"
+              >
+                <LineChart className="h-4 w-4" />
+                {isExpanded && <span className="ml-2">KPI</span>}
+              </Button>
+            </Link>
+
+            <Link href="/settings/team">
+              <Button 
+                variant={pathname === '/settings/team' ? "secondary" : "ghost"} 
+                className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
+                title="Team Settings"
+              >
+                <LineChart className="h-4 w-4" />
+                {isExpanded && <span className="ml-2">Team</span>}
+              </Button>
+            </Link>
+          </div>
+
         </nav>
       </div>
     </aside>
