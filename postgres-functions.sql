@@ -806,3 +806,55 @@ BEGIN
     USING v_year, v_month;
 END;
 $$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION search_experts(
+    p_limit INT DEFAULT 10,
+    p_offset INT DEFAULT 0,
+    p_search_string TEXT DEFAULT ''
+)
+RETURNS TABLE (
+    id BIGINT,
+    name TEXT,
+    email TEXT,
+    phone_number TEXT,
+    linkedin_url TEXT,
+    description TEXT,
+    experience TEXT,
+    rate TEXT,
+    job_from TEXT,
+    job_to TEXT,
+    company TEXT,
+    title TEXT,
+    recruiter TEXT,
+    total_count BIGINT
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    WITH filtered_data AS (
+        SELECT 
+            "Experts".*
+        FROM "Experts"
+        WHERE (
+            p_search_string = '' OR
+            "Experts".name ILIKE '%' || p_search_string || '%' OR
+            "Experts".email ILIKE '%' || p_search_string || '%' OR
+            "Experts".company ILIKE '%' || p_search_string || '%' OR
+            "Experts".title ILIKE '%' || p_search_string || '%' OR
+            "Experts".description ILIKE '%' || p_search_string || '%' OR
+            "Experts".experience ILIKE '%' || p_search_string || '%'
+        )
+    ),
+    total AS (
+        SELECT COUNT(*) AS total_count FROM filtered_data
+    )
+    SELECT 
+        fd.*,
+        t.total_count
+    FROM filtered_data fd, total t
+    ORDER BY fd.name ASC
+    LIMIT p_limit
+    OFFSET p_offset;
+END;
+$$;

@@ -330,7 +330,11 @@ CREATE TABLE IF NOT EXISTS "TeamMembers" (
   nick TEXT,
   name TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+  badge boolean DEFAULT false,
+  region text CHECK (region IN ('Global', 'JP')) DEFAULT 'Global',
+  pm text DEFAULT '',
+  resource_allocation float DEFAULT 1.0
 );
 
 -- Create trigger for updated_at

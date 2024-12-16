@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from "@/components/ui/button";
-import { Users, Briefcase, X, ChevronLeft, ChevronRight, Calendar, FolderTree, BookOpen, Database, BarChart, LineChart } from "lucide-react";
+import { Users, Briefcase, X, ChevronLeft, ChevronRight, Calendar, FolderTree, BookOpen, Database, BarChart, LineChart, UserCheck } from "lucide-react";
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Logo } from './Logo';
@@ -135,6 +135,16 @@ export function Sidebar({ onClose }: SidebarProps) {
               {isExpanded && <span className="ml-2">Master Data</span>}
             </Button>
           </Link>
+          <Link href="/experts">
+            <Button 
+              variant={pathname.startsWith('/experts') ? "secondary" : "ghost"} 
+              className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
+              title="Experts Data"
+            >
+              <UserCheck className="h-4 w-4" />
+              {isExpanded && <span className="ml-2">Experts</span>}
+            </Button>
+          </Link>
           <Link href="/operational-clients">
             <Button 
               variant={pathname.startsWith('/operational-clients') ? "secondary" : "ghost"} 
@@ -263,9 +273,9 @@ export function Sidebar({ onClose }: SidebarProps) {
               </Button>
             </Link>
 
-            <Link href="/settings/team">
+            <Link href="/team">
               <Button 
-                variant={pathname === '/settings/team' ? "secondary" : "ghost"} 
+                variant={pathname === '/team' ? "secondary" : "ghost"} 
                 className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
                 title="Team Settings"
               >

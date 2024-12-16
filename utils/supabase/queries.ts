@@ -1123,35 +1123,24 @@ export interface TeamMember {
   email: string;
   nick: string;
   name: string;
-  created_at?: string;
-  updated_at?: string;
+  badge: boolean;
+  region: 'Global' | 'JP';
+  pm: string;
+  resource_allocation: number;
 }
 
-export async function getTeamMembers(
-  supabase: SupabaseClient,
-  page: number = 1,
-  limit: number = 10
-): Promise<{ members: TeamMember[]; count: number }> {
-  const offset = (page - 1) * limit;
-
-  const [{ data: members, error }, { count, error: countError }] = await Promise.all([
-    supabase
-      .from('TeamMembers')
-      .select('*')
-      .order('email')
-      .range(offset, offset + limit - 1),
-    supabase
-      .from('TeamMembers')
-      .select('*', { count: 'exact', head: true })
-  ]);
+export async function getTeamMembers(supabase: SupabaseClient, page: number, itemsPerPage: number) {
+  const start = (page - 1) * itemsPerPage;
+  
+  const { data: members, error, count } = await supabase
+    .from('TeamMembers')
+    .select('*', { count: 'exact' })
+    .range(start, start + itemsPerPage - 1)
+    .order('email');
 
   if (error) throw error;
-  if (countError) throw countError;
-
-  return {
-    members: members as TeamMember[],
-    count: count || 0
-  };
+  
+  return { members, count };
 }
 
 export async function getTeamMember(
@@ -1191,4 +1180,52 @@ export async function deleteTeamMember(
     .eq('email', email);
 
   if (error) throw error;
+}
+
+export async function updateTeamMembers(supabase: SupabaseClient, updates: Partial<TeamMember>[]) {
+  const { error } = await supabase
+    .from('TeamMembers')
+    .upsert(updates, { onConflict: 'email' });
+
+  if (error) throw error;
+}
+
+interface ExpertData {
+  id: number;
+  name: string;
+  email: string;
+  phone_number: string;
+  linkedin_url: string;
+  description: string;
+  experience: string;
+  rate: string;
+  job_from: string;
+  job_to: string;
+  company: string;
+  title: string;
+  recruiter: string;
+  total_count: number;
+}
+
+export async function getExpertsData(
+  supabase: SupabaseClient,
+  page: number = 1,
+  limit: number = 10,
+  searchString: string = ''
+) {
+  const offset = (page - 1) * limit;
+
+  const { data, error } = await supabase
+    .rpc('search_experts', {
+      p_limit: limit,
+      p_offset: offset,
+      p_search_string: searchString
+    });
+
+  if (error) throw error;
+
+  return {
+    expertsData: data as ExpertData[],
+    count: data?.[0]?.total_count || 0
+  };
 }
