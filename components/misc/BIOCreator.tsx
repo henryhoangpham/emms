@@ -121,7 +121,7 @@ export default function BIOCreator() {
       id: 'output',
       title: 'Generated BIO',
       content: '',
-      isExpanded: true,
+      isExpanded: false,
       placeholder: 'Generated bio will appear here...'
     }
   ]);
