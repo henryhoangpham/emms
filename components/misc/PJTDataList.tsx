@@ -19,6 +19,13 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/utils/cn";
 import { TableWrapper } from '@/components/ui/table-wrapper';
 import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const CONTRACT_TYPES = [
   'All',
@@ -43,6 +50,20 @@ interface PJTDataListProps {
   user: User;
 }
 
+interface PJTDetails {
+  id: number;
+  pjt_code: string;
+  project_topic: string;
+  client: string;
+  client_pic_name: string;
+  client_pic_email: string;
+  contract_type: string;
+  inquiry_date: string;
+  proposal_date: string;
+  status: string;
+  required_nr_of_calls: number;
+}
+
 export default function PJTDataList({ user }: PJTDataListProps) {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,6 +78,8 @@ export default function PJTDataList({ user }: PJTDataListProps) {
   const supabase = createClient();
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
+  const [selectedPJT, setSelectedPJT] = useState<PJTDetails | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const fetchData = useCallback(async (
     skipDebounce: boolean = false,
@@ -183,6 +206,23 @@ export default function PJTDataList({ user }: PJTDataListProps) {
       }
     };
   }, []); // Empty dependency array for initial load
+
+  const handleRowClick = (pjt: any) => {
+    setSelectedPJT({
+      id: pjt.id,
+      pjt_code: pjt.pjt_code || '',
+      project_topic: pjt.project_topic || '',
+      client: pjt.client || '',
+      client_pic_name: pjt.client_pic_name || '',
+      client_pic_email: pjt.client_pic_email || '',
+      contract_type: pjt.contract_type || '',
+      inquiry_date: pjt.inquiry_date || '',
+      proposal_date: pjt.proposal_date || '',
+      status: pjt.status || '',
+      required_nr_of_calls: pjt.required_nr_of_calls || 0
+    });
+    setDialogOpen(true);
+  };
 
   if (loading) {
     return <div>Loading...</div>;
@@ -318,17 +358,79 @@ export default function PJTDataList({ user }: PJTDataListProps) {
                 {data.map((item) => (
                   <tr 
                     key={item.id}
-                    className="border-b hover:bg-muted/50"
+                    className="border-b hover:bg-muted/50 cursor-pointer"
+                    onClick={() => handleRowClick(item)}
                   >
-                    <td className="p-2 whitespace-nowrap">{item.pjt_code || '-'}</td>
+                    <td className="p-2">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="truncate w-40">
+                              {item.pjt_code || '-'}
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{item.pjt_code || '-'}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </td>
                     <td className="p-2 whitespace-nowrap">{item.required_nr_of_calls || '-'}</td>
                     <td className="p-2 whitespace-nowrap">{item.status || '-'}</td>
-                    <td className="p-2 max-w-md break-words">{item.project_topic || '-'}</td>
-                    <td className="p-2 whitespace-nowrap">{item.client || '-'}</td>
-                    <td className="p-2 whitespace-nowrap">
+                    <td className="p-2">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="line-clamp-2 max-w-md">
+                              {item.project_topic || '-'}
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{item.project_topic || '-'}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </td>
+                    <td className="p-2">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="truncate w-40">
+                              {item.client || '-'}
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{item.client || '-'}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </td>
+                    <td className="p-2">
                       <div>
-                        <div>{item.client_pic_name || '-'}</div>
-                        <div className="text-sm text-muted-foreground">{item.client_pic_email || '-'}</div>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="truncate w-40">
+                                {item.client_pic_name || '-'}
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{item.client_pic_name || '-'}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="truncate w-40 text-sm text-muted-foreground">
+                                {item.client_pic_email || '-'}
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{item.client_pic_email || '-'}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </div>
                     </td>
                     <td className="p-2 whitespace-nowrap">{item.contract_type || '-'}</td>
@@ -351,6 +453,80 @@ export default function PJTDataList({ user }: PJTDataListProps) {
           />
         </CardContent>
       </Card>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Project Details</DialogTitle>
+          </DialogHeader>
+          
+          {selectedPJT && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h3 className="font-semibold">PJT Code</h3>
+                  <p>{selectedPJT.pjt_code}</p>
+                </div>
+                
+                <div>
+                  <h3 className="font-semibold">Status</h3>
+                  <p>{selectedPJT.status}</p>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="font-semibold">Project Topic</h3>
+                <p className="whitespace-pre-line">{selectedPJT.project_topic}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h3 className="font-semibold">Client</h3>
+                  <p>{selectedPJT.client}</p>
+                </div>
+                
+                <div>
+                  <h3 className="font-semibold">Contract Type</h3>
+                  <p>{selectedPJT.contract_type}</p>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="font-semibold">Client PIC</h3>
+                <div className="space-y-1">
+                  <p>{selectedPJT.client_pic_name}</p>
+                  <p className="text-muted-foreground">{selectedPJT.client_pic_email}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h3 className="font-semibold">Inquiry Date</h3>
+                  <p>
+                    {selectedPJT.inquiry_date 
+                      ? format(new Date(selectedPJT.inquiry_date), 'dd/MM/yyyy')
+                      : '-'}
+                  </p>
+                </div>
+                
+                <div>
+                  <h3 className="font-semibold">Proposal Date</h3>
+                  <p>
+                    {selectedPJT.proposal_date 
+                      ? format(new Date(selectedPJT.proposal_date), 'dd/MM/yyyy')
+                      : '-'}
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="font-semibold">Required Number of Calls</h3>
+                <p>{selectedPJT.required_nr_of_calls}</p>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 } 
