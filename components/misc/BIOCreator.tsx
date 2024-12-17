@@ -37,6 +37,19 @@ interface SearchResult {
   experts: any[];
 }
 
+// Add interface for expert data
+interface ExpertData {
+  id: number;
+  name: string;
+  email: string;
+  job_from?: string;
+  job_to?: string;
+  company?: string;
+  title?: string;
+  experience?: string;
+  description?: string;
+}
+
 export default function BIOCreator() {
   const { toast } = useToast();
   const supabase = createClient();
@@ -299,8 +312,8 @@ Contract Type: ${project.contract_type}
 Required Number of Calls: ${project.required_nr_of_calls || 0}`;
   };
 
-  const formatExpertInfo = (expert: any) => {
-    const careers = expert.job_from?.split('\n').map((_, index) => ({
+  const formatExpertInfo = (expert: ExpertData) => {
+    const careers = expert.job_from?.split('\n').map((_: string, index: number) => ({
       job_from: expert.job_from?.split('\n')[index] || '',
       job_to: expert.job_to?.split('\n')[index] || '',
       company: expert.company?.split('\n')[index] || '',
