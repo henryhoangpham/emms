@@ -50,6 +50,29 @@ interface ExpertData {
   description?: string;
 }
 
+// Add language type and options
+type Language = 'EN' | 'JP' | 'KR' | 'CN' | 'VN' | 'TH';
+
+const LANGUAGES: { value: Language; label: string }[] = [
+  { value: 'EN', label: 'English' },
+  { value: 'JP', label: 'Japanese' },
+  { value: 'KR', label: 'Korean' },
+  { value: 'CN', label: 'Chinese' },
+  { value: 'VN', label: 'Vietnamese' },
+  { value: 'TH', label: 'Thai' }
+];
+
+const DEFAULT_SAMPLE_OUTPUT = `Fullname: 
+
+Quick Introduction: 
+
+Career History:
+
+Experience:
+
+Proposed Reason:
+`;
+
 export default function BIOCreator() {
   const { toast } = useToast();
   const supabase = createClient();
@@ -108,6 +131,9 @@ export default function BIOCreator() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedLLM, setSelectedLLM] = useState<LLMType>('openai');
 
+  // Add language state
+  const [selectedLanguage, setSelectedLanguage] = useState<Language>('EN');
+
   const toggleSection = (id: string) => {
     setSections(sections.map(section => 
       section.id === id 
@@ -136,6 +162,10 @@ export default function BIOCreator() {
         throw new Error('Please fill in all required fields');
       }
 
+      const languagePrompt = selectedLanguage === 'EN' 
+        ? promptSection.content 
+        : `${promptSection.content}\n\nPlease generate the bio in ${LANGUAGES.find(l => l.value === selectedLanguage)?.label} language.`;
+
       const context = `
 Project Information:
 ${projectSection.content}
@@ -148,7 +178,7 @@ ${sampleSection.content}` : ''}`;
 
       const llmProvider = LLMFactory.createProvider(selectedLLM);
       const generatedBio = await llmProvider.generateBio(
-        promptSection.content,
+        languagePrompt,
         context
       );
 
@@ -345,6 +375,11 @@ ${expert.description || ''}`;
     };
   }, []);
 
+  // Initialize sample output
+  useEffect(() => {
+    updateContent('sample', DEFAULT_SAMPLE_OUTPUT);
+  }, []);
+
   return (
     <div className="w-full mx-auto">
       <Card>
@@ -352,34 +387,9 @@ ${expert.description || ''}`;
           <CardTitle>BIO Creator</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Prompt Section */}
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <Label>{sections[0].title}</Label>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => toggleSection('prompt')}
-              >
-                {sections[0].isExpanded ? (
-                  <ChevronUp className="h-4 w-4" />
-                ) : (
-                  <ChevronDown className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
-            <Textarea
-              placeholder={sections[0].placeholder}
-              value={sections[0].content}
-              onChange={(e) => updateContent('prompt', e.target.value)}
-              rows={sections[0].isExpanded ? 20 : 5}
-              className="resize-none transition-all duration-200"
-            />
-          </div>
-
-          {/* Project and Expert Section */}
+          {/* Project and Expert Search/Info Row */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Project Info */}
+            {/* Project Section */}
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <Label>Project Information</Label>
@@ -436,7 +446,7 @@ ${expert.description || ''}`;
               />
             </div>
 
-            {/* Expert Info */}
+            {/* Expert Section */}
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <Label>Expert Information</Label>
@@ -494,17 +504,18 @@ ${expert.description || ''}`;
             </div>
           </div>
 
-          {/* Sample and Output Sections */}
-          {sections.slice(3).map((section) => (
-            <div key={section.id} className="space-y-2">
+          {/* Prompt and Sample Row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Prompt Section */}
+            <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <Label>{section.title}</Label>
+                <Label>Prompt</Label>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => toggleSection(section.id)}
+                  onClick={() => toggleSection('prompt')}
                 >
-                  {section.isExpanded ? (
+                  {sections[0].isExpanded ? (
                     <ChevronUp className="h-4 w-4" />
                   ) : (
                     <ChevronDown className="h-4 w-4" />
@@ -512,51 +523,120 @@ ${expert.description || ''}`;
                 </Button>
               </div>
               <Textarea
-                placeholder={section.placeholder}
-                value={section.content}
-                onChange={(e) => updateContent(section.id, e.target.value)}
-                rows={section.isExpanded ? 20 : 5}
+                placeholder={sections[0].placeholder}
+                value={sections[0].content}
+                onChange={(e) => updateContent('prompt', e.target.value)}
+                rows={sections[0].isExpanded ? 20 : 5}
                 className="resize-none transition-all duration-200"
               />
             </div>
-          ))}
 
-          {/* Action Buttons */}
-          <div className="flex justify-between items-center pt-4">
-            <div className="space-x-2 flex items-center">
-              <Select
-                value={selectedLLM}
-                onValueChange={(value: LLMType) => setSelectedLLM(value)}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select LLM" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="openai">OpenAI GPT-4</SelectItem>
-                  <SelectItem value="gemini">Google Gemini</SelectItem>
-                  <SelectItem value="grok">XAI Grok</SelectItem>
-                </SelectContent>
-              </Select>
+            {/* Sample Output Section */}
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <Label>Sample Output</Label>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => toggleSection('sample')}
+                >
+                  {sections[3].isExpanded ? (
+                    <ChevronUp className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+              <Textarea
+                placeholder={sections[3].placeholder}
+                value={sections[3].content}
+                onChange={(e) => updateContent('sample', e.target.value)}
+                rows={sections[3].isExpanded ? 20 : 5}
+                className="resize-none transition-all duration-200"
+              />
+            </div>
+          </div>
+
+          {/* Output Section with Floating Copy Button */}
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <Label>Generated BIO</Label>
               <Button
-                onClick={handleCreate}
-                disabled={isGenerating}
+                variant="ghost"
+                size="sm"
+                onClick={() => toggleSection('output')}
               >
-                {isGenerating ? "Generating..." : "Create BIO"}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={handleSave}
-              >
-                <Save className="h-4 w-4 mr-2" />
-                Save
+                {sections[4].isExpanded ? (
+                  <ChevronUp className="h-4 w-4" />
+                ) : (
+                  <ChevronDown className="h-4 w-4" />
+                )}
               </Button>
             </div>
+            <div className="relative">
+              <Textarea
+                placeholder={sections[4].placeholder}
+                value={sections[4].content}
+                onChange={(e) => updateContent('output', e.target.value)}
+                rows={sections[4].isExpanded ? 20 : 5}
+                className="resize-none transition-all duration-200"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                className="absolute top-2 right-2"
+                onClick={handleCopy}
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center space-x-2">
+            <Select
+              value={selectedLLM}
+              onValueChange={(value: LLMType) => setSelectedLLM(value)}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select LLM" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="openai">OpenAI GPT-4</SelectItem>
+                <SelectItem value="gemini">Google Gemini</SelectItem>
+                <SelectItem value="grok">XAI Grok</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={selectedLanguage}
+              onValueChange={(value: Language) => setSelectedLanguage(value)}
+            >
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Select Language" />
+              </SelectTrigger>
+              <SelectContent>
+                {LANGUAGES.map(lang => (
+                  <SelectItem key={lang.value} value={lang.value}>
+                    {lang.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Button
+              onClick={handleCreate}
+              disabled={isGenerating}
+            >
+              {isGenerating ? "Generating..." : "Create BIO"}
+            </Button>
+
             <Button
               variant="outline"
-              onClick={handleCopy}
+              onClick={handleSave}
             >
-              <Copy className="h-4 w-4 mr-2" />
-              Copy BIO
+              <Save className="h-4 w-4 mr-2" />
+              Save
             </Button>
           </div>
         </CardContent>
