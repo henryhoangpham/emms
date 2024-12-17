@@ -18,6 +18,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Copy } from 'lucide-react';
+import { formatExpertForClipboard } from '@/utils/clipboard';
+import { Button } from '@/components/ui/button';
 
 interface ExpertCareer {
   job_from: string;
@@ -329,7 +332,27 @@ export default function ExpertsList({ user }: ExpertsListProps) {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Expert Details</DialogTitle>
+            <div className="flex justify-between items-center">
+              <DialogTitle>Expert Details</DialogTitle>
+              {selectedExpert && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex gap-2"
+                  onClick={() => {
+                    const formattedContent = formatExpertForClipboard(selectedExpert);
+                    navigator.clipboard.writeText(formattedContent);
+                    toast({
+                      title: "Copied to clipboard",
+                      description: "Expert details have been copied to your clipboard",
+                    });
+                  }}
+                >
+                  <Copy className="h-4 w-4" />
+                  Copy
+                </Button>
+              )}
+            </div>
           </DialogHeader>
           
           {selectedExpert && (

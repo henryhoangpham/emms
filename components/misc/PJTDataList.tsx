@@ -10,7 +10,7 @@ import { getPJTMasterData } from '@/utils/supabase/queries';
 import { Pagination } from '@/components/ui/pagination';
 import { DEFAULT_ITEMS_PER_PAGE } from '@/utils/constants';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, X, Check } from 'lucide-react';
+import { ChevronDown, X, Check, Copy } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -26,6 +26,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { formatPJTForClipboard } from '@/utils/clipboard';
 
 const CONTRACT_TYPES = [
   'All',
@@ -62,6 +63,8 @@ interface PJTDetails {
   proposal_date: string;
   status: string;
   required_nr_of_calls: number;
+  project_brief: string;
+  research_priorities: string;
 }
 
 export default function PJTDataList({ user }: PJTDataListProps) {
@@ -219,7 +222,9 @@ export default function PJTDataList({ user }: PJTDataListProps) {
       inquiry_date: pjt.inquiry_date || '',
       proposal_date: pjt.proposal_date || '',
       status: pjt.status || '',
-      required_nr_of_calls: pjt.required_nr_of_calls || 0
+      required_nr_of_calls: pjt.required_nr_of_calls || 0,
+      project_brief: pjt.tag3 || '',
+      research_priorities: pjt.tag4 || ''
     });
     setDialogOpen(true);
   };
@@ -457,7 +462,27 @@ export default function PJTDataList({ user }: PJTDataListProps) {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Project Details</DialogTitle>
+            <div className="flex justify-between items-center">
+              <DialogTitle>Project Details</DialogTitle>
+              {selectedPJT && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex gap-2"
+                  onClick={() => {
+                    const formattedContent = formatPJTForClipboard(selectedPJT);
+                    navigator.clipboard.writeText(formattedContent);
+                    toast({
+                      title: "Copied to clipboard",
+                      description: "Project details have been copied to your clipboard",
+                    });
+                  }}
+                >
+                  <Copy className="h-4 w-4" />
+                  Copy
+                </Button>
+              )}
+            </div>
           </DialogHeader>
           
           {selectedPJT && (
@@ -522,6 +547,16 @@ export default function PJTDataList({ user }: PJTDataListProps) {
               <div>
                 <h3 className="font-semibold">Required Number of Calls</h3>
                 <p>{selectedPJT.required_nr_of_calls}</p>
+              </div>
+
+              <div>
+                <h3 className="font-semibold">Project Brief</h3>
+                <p className="whitespace-pre-line">{selectedPJT.project_brief}</p>
+              </div>
+
+              <div>
+                <h3 className="font-semibold">Research Priorities</h3>
+                <p className="whitespace-pre-line">{selectedPJT.research_priorities}</p>
               </div>
             </div>
           )}

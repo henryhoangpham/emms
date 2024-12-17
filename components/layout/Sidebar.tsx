@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from "@/components/ui/button";
-import { Users, Briefcase, X, ChevronLeft, ChevronRight, Calendar, FolderTree, BookOpen, Database, BarChart, LineChart, UserCheck } from "lucide-react";
+import { Users, Briefcase, X, ChevronLeft, ChevronRight, Calendar, FolderTree, BookOpen, Database, BarChart, LineChart, UserCheck, Wrench, FileText } from "lucide-react";
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Logo } from './Logo';
@@ -227,6 +227,24 @@ export function Sidebar({ onClose }: SidebarProps) {
             </Link>
           </div>
 
+          {/* Tools Section */}
+          <div className="pt-2 border-t">
+            <div className="text-sm text-muted-foreground px-2 py-1">
+              {isExpanded && "Tools"}
+            </div>
+            
+            <Link href="/bio-creator">
+              <Button 
+                variant={pathname === '/bio-creator' ? "secondary" : "ghost"} 
+                className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
+                title="BIO Creator"
+              >
+                <FileText className="h-4 w-4" />
+                {isExpanded && <span className="ml-2">BIO Creator</span>}
+              </Button>
+            </Link>
+          </div>
+
           {/* Invoice Section */}
           <div className="pt-2 border-t">
             <div className="text-sm text-muted-foreground px-2 py-1">
@@ -275,12 +293,12 @@ export function Sidebar({ onClose }: SidebarProps) {
 
             <Link href="/team">
               <Button 
-                variant={pathname === '/team' ? "secondary" : "ghost"} 
+                variant={pathname === '/teams' ? "secondary" : "ghost"} 
                 className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
                 title="Team Settings"
               >
                 <LineChart className="h-4 w-4" />
-                {isExpanded && <span className="ml-2">Team</span>}
+                {isExpanded && <span className="ml-2">Teams</span>}
               </Button>
             </Link>
           </div>

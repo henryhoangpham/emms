@@ -16,6 +16,9 @@ RETURNS TABLE (
     inquiry_date TIMESTAMP,
     proposal_date TEXT,
     status TEXT,
+    required_nr_of_calls INT,
+    tag3 TEXT,
+    tag4 TEXT,
     total_count BIGINT
 )
 LANGUAGE plpgsql
@@ -33,7 +36,10 @@ BEGIN
             "PJT".contract_type,
             "PJT".inquiry_date,
             "PJT".proposal_date,
-            "PJT".status
+            "PJT".status,
+            "PJT".required_nr_of_calls,
+            "PJT".tag3,
+            "PJT".tag4
         FROM "PJT"
         WHERE (
             -- Search string filter
@@ -66,6 +72,9 @@ BEGIN
         fd.inquiry_date,
         fd.proposal_date,
         fd.status,
+        fd.required_nr_of_calls,
+        fd.tag3,
+        fd.tag4,
         t.total_count
     FROM filtered_data fd, total t
     ORDER BY fd.inquiry_date DESC

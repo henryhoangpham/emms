@@ -10,6 +10,7 @@
     "prettier-fix": "prettier --write ."
   },
   "dependencies": {
+    "@google/generative-ai": "^0.21.0",
     "@icons-pack/react-simple-icons": "^10.2.0",
     "@radix-ui/react-accordion": "^1.2.1",
     "@radix-ui/react-avatar": "^1.1.1",
@@ -36,6 +37,7 @@
     "date-fns": "^4.1.0",
     "lucide-react": "^0.468.0",
     "next": "^15.0.4",
+    "openai": "^4.76.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-merge-refs": "^2.1.1",
