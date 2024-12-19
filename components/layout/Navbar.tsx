@@ -2,7 +2,7 @@
 
 import { NavigationMenu, NavigationMenuList } from '@/components/ui/navigation-menu';
 import { Button } from '@/components/ui/button';
-import { Menu } from 'lucide-react';
+import { Menu, LogOut } from 'lucide-react';
 import { ModeToggle } from '../landing/mode-toggle';
 import { User } from '@supabase/supabase-js';
 import { createApiClient } from '@/utils/supabase/api';
@@ -17,14 +17,12 @@ interface NavbarProps {
 
 export function Navbar({ user, onMenuClick }: NavbarProps) {
   const router = useRouter();
-  const api = createApiClient(createClient());
+  const supabase = createClient();
   const { currentTenant } = useTenant();
   
-  const handleAuth = async () => {
-    if (user) {
-      return router.push('/account');
-    }
-    return router.push('/auth');
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    router.push('/auth/signin');
   };
 
   return (
@@ -46,13 +44,16 @@ export function Navbar({ user, onMenuClick }: NavbarProps) {
               {currentTenant.name}
             </span>
           )}
-          <Button
-            onClick={handleAuth}
-            className="border"
-            variant="secondary"
-          >
-            {user ? 'Account' : 'Sign In'}
-          </Button>
+          {user && (
+            <Button
+              onClick={handleSignOut}
+              className="border"
+              variant="secondary"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Sign Out
+            </Button>
+          )}
           <ModeToggle />
         </div>
       </div>
