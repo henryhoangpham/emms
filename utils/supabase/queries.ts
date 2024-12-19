@@ -1258,3 +1258,43 @@ export async function saveBIOHistory(
 
   return { data };
 }
+
+interface BIOHistorySearchParams {
+  page?: number;
+  limit?: number;
+  searchText?: string;
+  dateFrom: Date | null;
+  dateTo: Date | null;
+  userEmail?: string | '';
+}
+
+export async function searchBIOHistory(
+  supabase: SupabaseClient,
+  {
+    page = 1,
+    limit = 10,
+    searchText = '',
+    dateFrom = null,
+    dateTo = null,
+    userEmail = ''
+  }: BIOHistorySearchParams
+) {
+  const offset = (page - 1) * limit;
+
+  const { data, error } = await supabase
+    .rpc('search_bio_history', {
+      p_limit: limit,
+      p_offset: offset,
+      p_search_text: searchText,
+      p_date_from: dateFrom,
+      p_date_to: dateTo,
+      p_user_email: userEmail
+    });
+
+  if (error) throw error;
+
+  return {
+    histories: data,
+    count: data?.[0]?.total_count || 0
+  };
+}

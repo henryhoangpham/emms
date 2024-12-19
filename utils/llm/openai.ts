@@ -15,9 +15,9 @@ export class OpenAIProvider implements LLMProvider {
   async generateBio(prompt: string, context: string): Promise<string> {
     try {
       const completion = await this.client.chat.completions.create({
-        model: this.config.model || 'gpt-4',
+        model: this.config.model || 'gpt-4o',
         temperature: this.config.temperature || 0.7,
-        max_tokens: this.config.maxTokens || 1000,
+        max_tokens: this.config.maxTokens || 10000,
         messages: [
           {
             role: 'system',

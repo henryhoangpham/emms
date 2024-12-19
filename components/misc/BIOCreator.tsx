@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Copy, ChevronDown, ChevronUp, Save, Search } from 'lucide-react';
+import { Copy, ChevronDown, ChevronUp, Save, Search, History } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { LLMFactory, LLMType } from '@/utils/llm/factory';
@@ -14,6 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format } from 'date-fns';
 import { getPJTMasterData, getExpertsData, saveBIOHistory } from '@/utils/supabase/queries';
 import { createClient } from '@/utils/supabase/client';
+import { BIOHistoryDialog } from './BIOHistoryDialog';
 
 const DEFAULT_PROMPT = `Please create a professional bio for an expert that highlights their relevant experience and expertise for the given project. The bio should:
 1. Focus on experience relevant to the project requirements
@@ -138,6 +139,9 @@ export default function BIOCreator({ user }: BIOCreatorProps) {
 
   // Add language state
   const [selectedLanguage, setSelectedLanguage] = useState<Language>('EN');
+
+  // Add state
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   const toggleSection = (id: string) => {
     setSections(sections.map(section => 
@@ -389,11 +393,29 @@ ${expert.description || ''}`;
     updateContent('sample', DEFAULT_SAMPLE_OUTPUT);
   }, []);
 
+  // Add handler
+  const handleHistorySelect = (history: any) => {
+    updateContent('prompt', history.prompt);
+    updateContent('project', history.project_info);
+    updateContent('expert', history.expert_info);
+    updateContent('sample', history.sample_output);
+    updateContent('output', history.generated_bio);
+    setSelectedLLM(history.llm_type as LLMType);
+    setSelectedLanguage(history.language as Language);
+  };
+
   return (
     <div className="w-full mx-auto">
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>BIO Creator</CardTitle>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setHistoryOpen(true)}
+          >
+            <History className="h-5 w-5" />
+          </Button>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Project and Expert Search/Info Row */}
@@ -611,7 +633,7 @@ ${expert.description || ''}`;
                 <SelectValue placeholder="Select LLM" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="openai">OpenAI GPT-4</SelectItem>
+                <SelectItem value="openai">OpenAI GPT-4o</SelectItem>
                 <SelectItem value="gemini">Google Gemini</SelectItem>
                 <SelectItem value="grok">XAI Grok</SelectItem>
               </SelectContent>
@@ -642,6 +664,13 @@ ${expert.description || ''}`;
           </div>
         </CardContent>
       </Card>
+
+      <BIOHistoryDialog
+        open={historyOpen}
+        onClose={() => setHistoryOpen(false)}
+        onSelect={handleHistorySelect}
+        userEmail={user.email}
+      />
     </div>
   );
 } 

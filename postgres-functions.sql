@@ -868,3 +868,63 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION search_bio_history(
+    p_limit INT DEFAULT 10,
+    p_offset INT DEFAULT 0,
+    p_search_text TEXT DEFAULT '',
+    p_date_from TIMESTAMP WITH TIME ZONE DEFAULT NULL,
+    p_date_to TIMESTAMP WITH TIME ZONE DEFAULT NULL,
+    p_user_email TEXT DEFAULT NULL
+)
+RETURNS TABLE (
+    id BIGINT,
+    user_email TEXT,
+    llm_type TEXT,
+    language TEXT,
+    prompt TEXT,
+    project_info TEXT,
+    expert_info TEXT,
+    sample_output TEXT,
+    generated_bio TEXT,
+    created_at TIMESTAMP WITH TIME ZONE,
+    total_count BIGINT
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    WITH filtered_data AS (
+        SELECT bh.*
+        FROM "BIOHistory" bh
+        WHERE (
+            p_search_text = '' OR
+            bh.project_info ILIKE '%' || p_search_text || '%' OR
+            bh.expert_info ILIKE '%' || p_search_text || '%' OR
+            bh.generated_bio ILIKE '%' || p_search_text || '%'
+        )
+        AND (
+            p_user_email IS NULL OR
+            bh.user_email = p_user_email
+        )
+        AND (
+            p_date_from IS NULL OR
+            bh.created_at >= p_date_from
+        )
+        AND (
+            p_date_to IS NULL OR
+            bh.created_at <= p_date_to
+        )
+    ),
+    total AS (
+        SELECT COUNT(*) AS total_count FROM filtered_data
+    )
+    SELECT 
+        fd.*,
+        t.total_count
+    FROM filtered_data fd, total t
+    ORDER BY fd.created_at DESC
+    LIMIT p_limit
+    OFFSET p_offset;
+END;
+$$;
+

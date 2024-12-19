@@ -39,6 +39,7 @@
     "next": "^15.0.4",
     "openai": "^4.76.3",
     "react": "^18.2.0",
+    "react-day-picker": "^9.4.4",
     "react-dom": "^18.2.0",
     "react-merge-refs": "^2.1.1",
     "stripe": "^17.4.0",
