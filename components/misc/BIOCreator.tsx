@@ -208,6 +208,7 @@ ${sampleSection.content}` : ''}`;
 
       updateContent('output', generatedBio);
     } catch (error: any) {
+      console.error('Error generating bio:', error);
       toast({
         title: "Error",
         description: error.message,
