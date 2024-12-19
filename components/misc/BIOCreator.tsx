@@ -16,13 +16,38 @@ import { getPJTMasterData, getExpertsData, saveBIOHistory } from '@/utils/supaba
 import { createClient } from '@/utils/supabase/client';
 import { BIOHistoryDialog } from './BIOHistoryDialog';
 
-const DEFAULT_PROMPT = `Please create a professional bio for an expert that highlights their relevant experience and expertise for the given project. The bio should:
-1. Focus on experience relevant to the project requirements
-2. Highlight key achievements and responsibilities
-3. Use professional and concise language
-4. Be approximately 200-300 words
-5. Maintain anonymity by not using specific company names
-6. Format the text with proper paragraphs`;
+const DEFAULT_PROMPT = `Create a professional profile for the expert that will maximize their chances of project approval. The profile should:
+
+1. Content Guidelines:
+- Extract and emphasize experience relevant to project requirements
+- Showcase concrete achievements with measurable impacts
+- Highlight domain expertise and technical depth
+- Demonstrate regional/market knowledge
+- Focus on recent experience (past 1-2 years)
+
+2. Writing Style:
+- Use clear, confident language
+- Be specific rather than general
+- Focus on facts and achievements
+- Maintain professional tone
+- Avoid technical jargon unless specifically relevant
+
+3. Structure Requirements:
+- Begin with a powerful executive summary
+- Organize information in logical sections
+- Include relevant metrics and outcomes
+- Highlight project-specific qualifications
+- Keep total length to 300 words maximum
+
+4. Essential Elements:
+- Relevant technical/domain expertise
+- Recent project experience
+- Industry knowledge
+- Consulting track record
+- Geographic expertise
+- Language capabilities
+- Current availability
+`;
 
 interface Section {
   id: string;
@@ -63,16 +88,38 @@ const LANGUAGES: { value: Language; label: string }[] = [
   { value: 'TH', label: 'Thai' }
 ];
 
-const DEFAULT_SAMPLE_OUTPUT = `Fullname: 
+const DEFAULT_SAMPLE_OUTPUT = `EXPERT CREDENTIALS
 
-Quick Introduction: 
+Executive Summary:
+[2-3 impactful sentences highlighting core expertise and value proposition]
 
-Career History:
+Domain Expertise:
+- [Primary area of specialization]
+- [Key technical competencies]
+- [Relevant methodologies/frameworks]
 
-Experience:
+Recent Achievements:
+- [Key project outcome 1]
+- [Key project outcome 2]
+- [Key project outcome 3]
 
-Proposed Reason:
-`;
+Industry Experience:
+- [Sector expertise]
+- [Types of organizations served]
+- [Notable solutions delivered]
+
+Geographic Coverage:
+- [Regional experience]
+- [Market knowledge]
+- [Cultural understanding]
+
+Additional Information:
+- Languages: [List relevant languages]
+- Availability: [Current status]
+- Location: [Base location/time zone]
+
+Value Proposition:
+[1-2 sentences on unique qualifications and potential contribution]`;
 
 // Add user prop to component
 interface BIOCreatorProps {
