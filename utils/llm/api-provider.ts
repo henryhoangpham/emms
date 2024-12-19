@@ -29,6 +29,7 @@ export class APIProvider implements LLMProvider {
 
       return data.content || '';
     } catch (error: any) {
+      console.log(`LLM API Error: ${error.message}`);
       throw new Error(`LLM API Error: ${error.message}`);
     }
   }
