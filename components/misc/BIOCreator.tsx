@@ -395,11 +395,25 @@ ${expert.description || ''}`;
 
   // Add handler
   const handleHistorySelect = (history: any) => {
-    updateContent('prompt', history.prompt);
-    updateContent('project', history.project_info);
-    updateContent('expert', history.expert_info);
-    updateContent('sample', history.sample_output);
-    updateContent('output', history.generated_bio);
+    // Update each section with the history data
+    setSections(sections.map(section => {
+      switch (section.id) {
+        case 'prompt':
+          return { ...section, content: history.prompt };
+        case 'project':
+          return { ...section, content: history.project_info };
+        case 'expert':
+          return { ...section, content: history.expert_info };
+        case 'sample':
+          return { ...section, content: history.sample_output };
+        case 'output':
+          return { ...section, content: history.generated_bio };
+        default:
+          return section;
+      }
+    }));
+
+    // Update other states
     setSelectedLLM(history.llm_type as LLMType);
     setSelectedLanguage(history.language as Language);
   };

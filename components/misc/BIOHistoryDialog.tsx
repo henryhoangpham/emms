@@ -17,12 +17,25 @@ interface BIOHistoryDialogProps {
   userEmail: string;
 }
 
+interface BIOHistoryItem {
+  id: number;
+  user_email: string;
+  llm_type: string;
+  language: string;
+  prompt: string;
+  project_info: string;
+  expert_info: string;
+  sample_output: string;
+  generated_bio: string;
+  created_at: string;
+}
+
 export function BIOHistoryDialog({ open, onClose, onSelect, userEmail }: BIOHistoryDialogProps) {
   const [searchText, setSearchText] = useState("");
   const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [page, setPage] = useState(1);
-  const [histories, setHistories] = useState<any[]>([]);
+  const [histories, setHistories] = useState<BIOHistoryItem[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(false);
 
@@ -35,7 +48,7 @@ export function BIOHistoryDialog({ open, onClose, onSelect, userEmail }: BIOHist
     }
   }, [open]);
 
-  const loadHistories = async () => {
+  const loadHistories = async (page: number) => {
     setLoading(true);
     try {
       const { histories, count } = await searchBIOHistory(supabase, {
@@ -57,15 +70,15 @@ export function BIOHistoryDialog({ open, onClose, onSelect, userEmail }: BIOHist
 
   const handleSearch = () => {
     setPage(1);
-    loadHistories();
+    loadHistories(1);
   };
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
-    loadHistories();
+    loadHistories(newPage);
   };
 
-  const handleSelect = (history: any) => {
+  const handleSelect = (history: BIOHistoryItem) => {
     onSelect(history);
     onClose();
   };
@@ -142,6 +155,9 @@ export function BIOHistoryDialog({ open, onClose, onSelect, userEmail }: BIOHist
                   </div>
                 </div>
                 <div className="text-sm line-clamp-2">{history.project_info}</div>
+                <div className="text-sm text-muted-foreground line-clamp-2 mt-1">
+                  {history.expert_info}
+                </div>
               </div>
             ))}
           </div>
