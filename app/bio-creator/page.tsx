@@ -14,7 +14,7 @@ export default async function BIOCreatorPage() {
   return (
     <div className="h-screen">
       <DashboardLayout user={user}>
-        <BIOCreator />
+        <BIOCreator user={user} />
       </DashboardLayout>
     </div>
   );

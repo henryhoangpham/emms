@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { LLMFactory, LLMType } from '@/utils/llm/factory';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from 'date-fns';
-import { getPJTMasterData, getExpertsData } from '@/utils/supabase/queries';
+import { getPJTMasterData, getExpertsData, saveBIOHistory } from '@/utils/supabase/queries';
 import { createClient } from '@/utils/supabase/client';
 
 const DEFAULT_PROMPT = `Please create a professional bio for an expert that highlights their relevant experience and expertise for the given project. The bio should:
@@ -73,7 +73,12 @@ Experience:
 Proposed Reason:
 `;
 
-export default function BIOCreator() {
+// Add user prop to component
+interface BIOCreatorProps {
+  user: any;
+}
+
+export default function BIOCreator({ user }: BIOCreatorProps) {
   const { toast } = useToast();
   const supabase = createClient();
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
@@ -150,6 +155,7 @@ export default function BIOCreator() {
     ));
   };
 
+  // Update handleCreate to save history
   const handleCreate = async () => {
     setIsGenerating(true);
     try {
@@ -167,12 +173,17 @@ export default function BIOCreator() {
         : `${promptSection.content}\n\nPlease generate the bio in ${LANGUAGES.find(l => l.value === selectedLanguage)?.label} language.`;
 
       const context = `
+\n\n
+---
 Project Information:
 ${projectSection.content}
-
+---
+\n\n
+---
 Expert Information:
 ${expertSection.content}
-
+---
+\n\n
 ${sampleSection?.content ? `Sample Output:
 ${sampleSection.content}` : ''}`;
 
@@ -181,6 +192,19 @@ ${sampleSection.content}` : ''}`;
         languagePrompt,
         context
       );
+      console.log(`generatedBio: ${generatedBio}`);
+
+      // Save to history using the new query function
+      await saveBIOHistory(supabase, {
+        user_email: user.email,
+        llm_type: selectedLLM,
+        language: selectedLanguage,
+        prompt: promptSection.content,
+        project_info: projectSection.content,
+        expert_info: expertSection.content,
+        sample_output: sampleSection?.content || '',
+        generated_bio: generatedBio
+      });
 
       updateContent('output', generatedBio);
     } catch (error: any) {
@@ -191,22 +215,6 @@ ${sampleSection.content}` : ''}`;
       });
     } finally {
       setIsGenerating(false);
-    }
-  };
-
-  const handleSave = async () => {
-    try {
-      // TODO: Implement save logic
-      toast({
-        title: "Success",
-        description: "BIO Creator data saved successfully",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to save data",
-        variant: "destructive",
-      });
     }
   };
 
@@ -629,14 +637,6 @@ ${expert.description || ''}`;
               disabled={isGenerating}
             >
               {isGenerating ? "Generating..." : "Create BIO"}
-            </Button>
-
-            <Button
-              variant="outline"
-              onClick={handleSave}
-            >
-              <Save className="h-4 w-4 mr-2" />
-              Save
             </Button>
           </div>
         </CardContent>

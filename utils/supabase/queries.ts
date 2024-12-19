@@ -1229,3 +1229,32 @@ export async function getExpertsData(
     count: data?.[0]?.total_count || 0
   };
 }
+
+// Add interface for BIO history data
+interface BIOHistoryData {
+  user_email: string;
+  llm_type: string;
+  language: string;
+  prompt: string;
+  project_info: string;
+  expert_info: string;
+  sample_output: string;
+  generated_bio: string;
+}
+
+// Add the new query function
+export async function saveBIOHistory(
+  supabase: any,
+  bioData: BIOHistoryData
+) {
+  const { data, error } = await supabase
+    .from('BIOHistory')
+    .insert(bioData)
+    .select();
+
+  if (error) {
+    throw error;
+  }
+
+  return { data };
+}
