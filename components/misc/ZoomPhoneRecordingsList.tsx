@@ -8,9 +8,10 @@ import { format } from 'date-fns';
 import { Pagination } from '@/components/ui/pagination';
 import { DEFAULT_ITEMS_PER_PAGE } from '@/utils/constants';
 import { Button } from '@/components/ui/button';
-import { Download } from 'lucide-react';
+import { Download, Loader2 } from 'lucide-react';
 import { TableWrapper } from '@/components/ui/table-wrapper';
 import { getZoomPhoneRecordings, PhoneRecording } from '@/utils/supabase/queries';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface ZoomPhoneRecordingListProps {
   user: User;
@@ -22,15 +23,18 @@ export default function ZoomPhoneRecordingsList({ user }: ZoomPhoneRecordingList
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(DEFAULT_ITEMS_PER_PAGE);
   const [totalItems, setTotalItems] = useState(0);
+  const [selectedRecordings, setSelectedRecordings] = useState<Set<string>>(new Set());
+  const [downloadingRecordings, setDownloadingRecordings] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
   const fetchRecordings = useCallback(async () => {
     try {
       setLoading(true);
       const data = await getZoomPhoneRecordings(currentPage, itemsPerPage);
-      
       setPhoneRecordings(data.phone_recordings);
       setTotalItems(data.total_records);
+      // Clear selections when page changes
+      setSelectedRecordings(new Set());
     } catch (error: any) {
       console.error('Error:', error);
       toast({
@@ -53,6 +57,7 @@ export default function ZoomPhoneRecordingsList({ user }: ZoomPhoneRecordingList
 
   const handleDownload = async (recording: PhoneRecording) => {
     try {
+      setDownloadingRecordings(prev => new Set(prev).add(recording.id));
       const response = await fetch('/api/zoom/phone-recordings/download', {
         method: 'POST',
         headers: {
@@ -68,7 +73,6 @@ export default function ZoomPhoneRecordingsList({ user }: ZoomPhoneRecordingList
         throw new Error('Failed to download recording');
       }
 
-      // Create blob and trigger download
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -85,7 +89,43 @@ export default function ZoomPhoneRecordingsList({ user }: ZoomPhoneRecordingList
         description: 'Failed to download recording',
         variant: 'destructive',
       });
+    } finally {
+      setDownloadingRecordings(prev => {
+        const next = new Set(prev);
+        next.delete(recording.id);
+        return next;
+      });
     }
+  };
+
+  const handleBulkDownload = async () => {
+    const selectedRecordingsList = phoneRecordings.filter(r => selectedRecordings.has(r.id));
+    
+    for (const recording of selectedRecordingsList) {
+      await handleDownload(recording);
+      // Add a small delay between downloads to prevent overwhelming the browser
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+  };
+
+  const toggleAllRecordings = (checked: boolean) => {
+    if (checked) {
+      setSelectedRecordings(new Set(phoneRecordings.map(r => r.id)));
+    } else {
+      setSelectedRecordings(new Set());
+    }
+  };
+
+  const toggleRecording = (recordingId: string) => {
+    setSelectedRecordings(prev => {
+      const next = new Set(prev);
+      if (next.has(recordingId)) {
+        next.delete(recordingId);
+      } else {
+        next.add(recordingId);
+      }
+      return next;
+    });
   };
 
   if (loading) {
@@ -97,12 +137,30 @@ export default function ZoomPhoneRecordingsList({ user }: ZoomPhoneRecordingList
   }
 
   const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const allSelected = phoneRecordings.length > 0 && phoneRecordings.every(r => selectedRecordings.has(r.id));
+  const someSelected = selectedRecordings.size > 0;
 
   return (
     <div className="w-full">
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Phone Recordings</CardTitle>
+          {someSelected && (
+            <Button
+              variant="default"
+              size="sm"
+              className="flex items-center gap-2"
+              onClick={handleBulkDownload}
+              disabled={downloadingRecordings.size > 0}
+            >
+              {downloadingRecordings.size > 0 ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4" />
+              )}
+              Download Selected ({selectedRecordings.size})
+            </Button>
+          )}
         </CardHeader>
         <CardContent>
           {phoneRecordings.length === 0 ? (
@@ -115,6 +173,13 @@ export default function ZoomPhoneRecordingsList({ user }: ZoomPhoneRecordingList
                 <table className="w-full">
                   <thead>
                     <tr className="text-left bg-muted">
+                      <th className="p-2 whitespace-nowrap">
+                        <Checkbox
+                          checked={allSelected}
+                          onCheckedChange={toggleAllRecordings}
+                          aria-label="Select all recordings"
+                        />
+                      </th>
                       <th className="p-2 whitespace-nowrap">Direction</th>
                       <th className="p-2 whitespace-nowrap">Caller</th>
                       <th className="p-2 whitespace-nowrap">Callee</th>
@@ -131,6 +196,13 @@ export default function ZoomPhoneRecordingsList({ user }: ZoomPhoneRecordingList
                         key={recording.id}
                         className="border-b hover:bg-muted/50"
                       >
+                        <td className="p-2 whitespace-nowrap">
+                          <Checkbox
+                            checked={selectedRecordings.has(recording.id)}
+                            onCheckedChange={() => toggleRecording(recording.id)}
+                            aria-label={`Select recording ${recording.id}`}
+                          />
+                        </td>
                         <td className="p-2 whitespace-nowrap">
                           <span className={`px-2 py-1 rounded-full text-xs ${
                             recording.direction === 'inbound' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
@@ -167,9 +239,14 @@ export default function ZoomPhoneRecordingsList({ user }: ZoomPhoneRecordingList
                             size="sm"
                             className="flex items-center gap-2"
                             onClick={() => handleDownload(recording)}
+                            disabled={downloadingRecordings.has(recording.id)}
                             title="Download recording"
                           >
-                            <Download className="h-4 w-4" />
+                            {downloadingRecordings.has(recording.id) ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Download className="h-4 w-4" />
+                            )}
                             Download
                           </Button>
                         </td>
