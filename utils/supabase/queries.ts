@@ -1298,3 +1298,58 @@ export async function searchBIOHistory(
     count: data?.[0]?.total_count || 0
   };
 }
+
+export interface PhoneRecording {
+  id: string;
+  caller_name: string;
+  caller_number: string;
+  callee_name: string;
+  callee_number: string;
+  duration: number;
+  recording_type: string;
+  date_time: string;
+  end_time: string;
+  direction: 'inbound' | 'outbound';
+  download_url: string;
+  access_token?: string;
+  auto_delete_policy: string;
+  owner: {
+    name: string;
+    extension_number: number;
+  };
+  site: {
+    name: string;
+  };
+}
+
+export interface ZoomPhoneRecordingsResponse {
+  phone_recordings: PhoneRecording[];
+  total_records: number;
+  page_size: number;
+  next_page_token: string;
+}
+
+export async function getZoomPhoneRecordings(
+  page: number = 1,
+  pageSize: number = 30
+): Promise<ZoomPhoneRecordingsResponse> {
+  const response = await fetch(
+    `/api/zoom/phone-recordings?page=${page}&page_size=${pageSize}`,
+    { method: 'GET' }
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || 'Failed to fetch phone recordings');
+  }
+
+  const data = await response.json();
+  
+  // Add access token to each recording
+  data.phone_recordings = data.phone_recordings.map((recording: PhoneRecording) => ({
+    ...recording,
+    access_token: data.access_token
+  }));
+
+  return data;
+}

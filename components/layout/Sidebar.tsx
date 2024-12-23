@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from "@/components/ui/button";
-import { Users, Briefcase, X, ChevronLeft, ChevronRight, Calendar, FolderTree, BookOpen, Database, BarChart, LineChart, UserCheck, Wrench, FileText } from "lucide-react";
+import { Users, Briefcase, X, ChevronLeft, ChevronRight, Calendar, FolderTree, BookOpen, Database, BarChart, LineChart, UserCheck, Wrench, FileText, Video } from "lucide-react";
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Logo } from './Logo';
@@ -187,6 +187,18 @@ export function Sidebar({ onClose, user }: SidebarProps) {
                 {isExpanded && <span className="ml-2">BIO Creator</span>}
               </Button>
             </Link>
+
+            <Link href="/phone-recordings">
+              <Button 
+                variant={pathname === '/phone-recordings' ? "secondary" : "ghost"} 
+                className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
+                title="Phone Recordings"
+              >
+                <Video className="h-4 w-4" />
+                {isExpanded && <span className="ml-2">Phone Recordings</span>}
+              </Button>
+            </Link>
+
           </div>
 
           {!isBioCreator && (
