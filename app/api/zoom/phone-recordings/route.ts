@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getZoomAccessToken } from '../utils';
+import { format } from 'date-fns';
 
 interface ZoomPhoneOwner {
   extension_number: number;
@@ -49,14 +50,37 @@ interface ZoomPhoneRecording {
 
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
-  const page = parseInt(searchParams.get('page') || '1');
   const pageSize = parseInt(searchParams.get('page_size') || '30');
+  const nextPageToken = searchParams.get('next_page_token') || '';
+  
+  // Get filter parameters
+  const fromDate = searchParams.get('from');
+  const toDate = searchParams.get('to');
 
   try {
     const accessToken = await getZoomAccessToken();
 
-    const url = `https://api.zoom.us/v2/phone/recordings?page_size=${pageSize}&next_page_token=${searchParams.get('next_page_token') || ''}`;
-    console.log('Fetching phone recordings from:', url);
+    // Build API URL with filters
+    const params = new URLSearchParams({
+      page_size: Math.min(pageSize, 300).toString(), // Ensure page_size doesn't exceed max
+      next_page_token: nextPageToken
+    });
+
+    // Only add date parameters if both from and to are provided
+    if (fromDate && toDate) {
+      // Pass the dates as-is since they're already formatted correctly
+      params.append('from', fromDate);
+      params.append('to', toDate);
+    }
+
+    const url = `https://api.zoom.us/v2/phone/recordings?${params.toString()}`;
+    console.log('Fetching phone recordings with params:', {
+      pageSize,
+      nextPageToken,
+      fromDate,
+      toDate,
+      url
+    });
 
     const response = await fetch(url, {
       headers: {
@@ -77,29 +101,12 @@ export async function GET(req: NextRequest) {
     }
 
     const data = await response.json();
-    
-    // Transform the recordings to match our interface
-    const recordings = (data.recordings || []).map((recording: ZoomPhoneRecording) => ({
-      id: recording.id,
-      caller_name: recording.caller_name,
-      caller_number: recording.caller_number,
-      callee_name: recording.callee_name,
-      callee_number: recording.callee_number,
-      duration: recording.duration,
-      recording_type: recording.recording_type,
-      date_time: recording.date_time,
-      end_time: recording.end_time,
-      direction: recording.direction,
-      download_url: recording.download_url,
-      auto_delete_policy: recording.auto_delete_policy,
-      owner: recording.owner,
-      site: recording.site
-    }));
+    const filteredRecordings = data.recordings || [];
 
     return NextResponse.json({
-      phone_recordings: recordings,
+      phone_recordings: filteredRecordings,
       total_records: data.total_records || 0,
-      page_size: data.page_size,
+      page_size: pageSize,
       next_page_token: data.next_page_token,
       access_token: accessToken
     });

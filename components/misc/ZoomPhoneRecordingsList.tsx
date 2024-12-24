@@ -9,9 +9,15 @@ import { DEFAULT_ITEMS_PER_PAGE, ITEMS_PER_PAGE_OPTIONS } from '@/utils/constant
 import { Button } from '@/components/ui/button';
 import { Download, Loader2 } from 'lucide-react';
 import { TableWrapper } from '@/components/ui/table-wrapper';
-import { getZoomPhoneRecordings, PhoneRecording } from '@/utils/supabase/queries';
+import { getZoomPhoneRecordings, PhoneRecording, PhoneRecordingFilters } from '@/utils/supabase/queries';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { Input } from "@/components/ui/input";
+import { CalendarIcon } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/utils/cn";
+import { addDays, startOfDay, endOfDay } from "date-fns";
 
 interface ZoomPhoneRecordingListProps {
   user: User;
@@ -28,19 +34,27 @@ export default function ZoomPhoneRecordingsList({ user }: ZoomPhoneRecordingList
   const [selectedRecordings, setSelectedRecordings] = useState<Set<string>>(new Set());
   const [downloadingRecordings, setDownloadingRecordings] = useState<Set<string>>(new Set());
   const { toast } = useToast();
+  const [dateFrom, setDateFrom] = useState<Date | undefined>();
+  const [dateTo, setDateTo] = useState<Date | undefined>();
 
   const fetchRecordings = useCallback(async () => {
     try {
       setLoading(true);
-      // Use the token for the current page
       const pageToken = pageTokens[currentPage - 1] || '';
-      const data = await getZoomPhoneRecordings(pageToken, itemsPerPage);
+      
+      const filters: PhoneRecordingFilters = {
+        dateFrom: dateFrom,
+        dateTo: dateTo
+      };
+
+      const data = await getZoomPhoneRecordings(pageToken, itemsPerPage, filters);
+      console.log('filters', filters);
+      console.log('recordings data', data);
       
       setPhoneRecordings(data.phone_recordings);
       setTotalItems(data.total_records);
       setNextPageToken(data.next_page_token);
 
-      // Store the next page token if we don't have it yet
       if (data.next_page_token && !pageTokens[currentPage]) {
         setPageTokens(prev => {
           const next = [...prev];
@@ -49,7 +63,6 @@ export default function ZoomPhoneRecordingsList({ user }: ZoomPhoneRecordingList
         });
       }
 
-      // Clear selections when page changes
       setSelectedRecordings(new Set());
     } catch (error: any) {
       console.error('Error:', error);
@@ -61,7 +74,7 @@ export default function ZoomPhoneRecordingsList({ user }: ZoomPhoneRecordingList
     } finally {
       setLoading(false);
     }
-  }, [currentPage, itemsPerPage, pageTokens, toast]);
+  }, [currentPage, itemsPerPage, pageTokens, toast, dateFrom, dateTo]);
 
   useEffect(() => {
     fetchRecordings();
@@ -180,6 +193,11 @@ export default function ZoomPhoneRecordingsList({ user }: ZoomPhoneRecordingList
     setNextPageToken('');
   };
 
+  const resetFilters = () => {
+    setDateFrom(undefined);
+    setDateTo(undefined);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-32">
@@ -215,6 +233,69 @@ export default function ZoomPhoneRecordingsList({ user }: ZoomPhoneRecordingList
           )}
         </CardHeader>
         <CardContent>
+          <div className="mb-6 grid gap-4 md:grid-cols-2">
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-medium">From Date</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "justify-start text-left font-normal",
+                      !dateFrom && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dateFrom ? format(dateFrom, "PPP") : "Pick a date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={dateFrom}
+                    onSelect={setDateFrom}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-medium">To Date</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "justify-start text-left font-normal",
+                      !dateTo && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dateTo ? format(dateTo, "PPP") : "Pick a date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={dateTo}
+                    onSelect={setDateTo}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+
+          <div className="mb-4 flex justify-end">
+            <Button
+              variant="outline"
+              onClick={resetFilters}
+              size="sm"
+            >
+              Reset Filters
+            </Button>
+          </div>
+
           <TableWrapper>
             <table className="w-full">
               <thead>

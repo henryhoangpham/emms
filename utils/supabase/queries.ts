@@ -1,4 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js';
+import { format } from 'date-fns';
 
 export const getUser = async (supabase: SupabaseClient) => {
   const {
@@ -1329,12 +1330,35 @@ export interface ZoomPhoneRecordingsResponse {
   next_page_token: string;
 }
 
+export interface PhoneRecordingFilters {
+  dateFrom?: Date;
+  dateTo?: Date;
+}
+
 export async function getZoomPhoneRecordings(
   nextPageToken: string = '',
-  pageSize: number = 30
+  pageSize: number = 30,
+  filters?: PhoneRecordingFilters
 ): Promise<ZoomPhoneRecordingsResponse> {
+  // Build query parameters
+  const params = new URLSearchParams({
+    next_page_token: nextPageToken,
+    page_size: pageSize.toString()
+  });
+
+  // Add filters to query parameters with correct date format
+  if (filters) {
+    if (filters.dateFrom) {
+      // Format: yyyy-MM-dd'T'HH:mm:ss'Z'
+      params.append('from', format(filters.dateFrom, "yyyy-MM-dd'T'HH:mm:ss'Z'"));
+    }
+    if (filters.dateTo) {
+      params.append('to', format(filters.dateTo, "yyyy-MM-dd'T'HH:mm:ss'Z'"));
+    }
+  }
+
   const response = await fetch(
-    `/api/zoom/phone-recordings?next_page_token=${nextPageToken}&page_size=${pageSize}`,
+    `/api/zoom/phone-recordings?${params.toString()}`,
     { method: 'GET' }
   );
 
