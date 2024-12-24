@@ -11,7 +11,9 @@ interface PaginationProps {
   itemsPerPage: number;
   totalItems: number;
   onPageChange: (page: number) => void;
-  onItemsPerPageChange: (items: number) => void;
+  onItemsPerPageChange: (itemsPerPage: number) => void;
+  hasNextPage?: boolean;
+  hasPreviousPage?: boolean;
 }
 
 export function Pagination({
@@ -20,7 +22,9 @@ export function Pagination({
   itemsPerPage,
   totalItems,
   onPageChange,
-  onItemsPerPageChange
+  onItemsPerPageChange,
+  hasNextPage,
+  hasPreviousPage
 }: PaginationProps) {
   const getPageNumbers = () => {
     const pages = [];

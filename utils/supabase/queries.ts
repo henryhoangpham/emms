@@ -1330,11 +1330,11 @@ export interface ZoomPhoneRecordingsResponse {
 }
 
 export async function getZoomPhoneRecordings(
-  page: number = 1,
+  nextPageToken: string = '',
   pageSize: number = 30
 ): Promise<ZoomPhoneRecordingsResponse> {
   const response = await fetch(
-    `/api/zoom/phone-recordings?page=${page}&page_size=${pageSize}`,
+    `/api/zoom/phone-recordings?next_page_token=${nextPageToken}&page_size=${pageSize}`,
     { method: 'GET' }
   );
 
