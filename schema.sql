@@ -367,3 +367,9 @@ CREATE TABLE IF NOT EXISTS public."BIOHistory" (
 
 CREATE INDEX IF NOT EXISTS idx_bio_history_user_email ON public."BIOHistory"(user_email);
 CREATE INDEX IF NOT EXISTS idx_bio_history_created_at ON public."BIOHistory"(created_at);
+
+create table
+  public."Prompts" (id bigint null, name text null, prompt text null) tablespace pg_default;
+
+create table
+  public."Example_Outputs" (id bigint null, name text null, output text null) tablespace pg_default;

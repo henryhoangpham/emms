@@ -1377,3 +1377,76 @@ export async function getZoomPhoneRecordings(
 
   return data;
 }
+
+export interface KPIMemberData {
+  email: string;
+  nick: string;
+  badge: boolean;
+  region: string;
+  pm: string;
+  resource_allocation: number;
+}
+
+export async function getKPITeamMembers(
+  supabase: SupabaseClient
+): Promise<KPIMemberData[]> {
+  const { data, error } = await supabase
+    .from('TeamMembers')
+    .select(`
+      email,
+      nick,
+      badge,
+      region,
+      pm,
+      resource_allocation
+    `)
+    .order('pm', { ascending: false })  // Order by PM first
+    .order('nick');  // Then by nick name
+
+  if (error) {
+    console.error('Error fetching KPI team members:', error);
+    throw error;
+  }
+
+  return data.filter((member: KPIMemberData) => member.pm !== '') || [];
+}
+
+export interface Prompt {
+  id: number;
+  name: string;
+  prompt: string;
+}
+
+export async function getPrompts(supabase: SupabaseClient): Promise<Prompt[]> {
+  const { data, error } = await supabase
+    .from('Prompts')
+    .select('*')
+    .order('id');
+
+  if (error) {
+    console.error('Error fetching prompts:', error);
+    throw error;
+  }
+
+  return data || [];
+}
+
+export interface ExampleOutput {
+  id: number;
+  name: string;
+  output: string;
+}
+
+export async function getExampleOutputs(supabase: SupabaseClient): Promise<ExampleOutput[]> {
+  const { data, error } = await supabase
+    .from('Example_Outputs')
+    .select('*')
+    .order('id');
+
+  if (error) {
+    console.error('Error fetching example outputs:', error);
+    throw error;
+  }
+
+  return data || [];
+}

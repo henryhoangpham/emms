@@ -6,13 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Copy, ChevronDown, ChevronUp, Save, Search, History } from 'lucide-react';
+import { Copy, ArrowUpDown, Save, Search, History } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { LLMFactory, LLMType } from '@/utils/llm/factory';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from 'date-fns';
-import { getPJTMasterData, getExpertsData, saveBIOHistory } from '@/utils/supabase/queries';
+import { getPJTMasterData, getExpertsData, saveBIOHistory, getPrompts, type Prompt, getExampleOutputs, type ExampleOutput } from '@/utils/supabase/queries';
 import { createClient } from '@/utils/supabase/client';
 import { BIOHistoryDialog } from './BIOHistoryDialog';
 
@@ -189,6 +189,14 @@ export default function BIOCreator({ user }: BIOCreatorProps) {
 
   // Add state
   const [historyOpen, setHistoryOpen] = useState(false);
+
+  // Add new state for prompts
+  const [prompts, setPrompts] = useState<Prompt[]>([]);
+  const [selectedPromptId, setSelectedPromptId] = useState<string>('');
+
+  // Add new state for example outputs
+  const [exampleOutputs, setExampleOutputs] = useState<ExampleOutput[]>([]);
+  const [selectedOutputId, setSelectedOutputId] = useState<string>('');
 
   const toggleSection = (id: string) => {
     setSections(sections.map(section => 
@@ -465,6 +473,72 @@ ${expert.description || ''}`;
     setSelectedLanguage(history.language as Language);
   };
 
+  // Add useEffect to fetch prompts
+  useEffect(() => {
+    const fetchPrompts = async () => {
+      try {
+        const promptsData = await getPrompts(supabase);
+        setPrompts(promptsData);
+        if (promptsData.length > 0) {
+          setSelectedPromptId(promptsData[0].id.toString());
+          // Update the prompt section content with the first prompt
+          updateContent('prompt', promptsData[0].prompt);
+        }
+      } catch (error) {
+        console.error('Error fetching prompts:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load prompts",
+          variant: "destructive",
+        });
+      }
+    };
+
+    fetchPrompts();
+  }, [supabase]);
+
+  // Add handler for prompt selection
+  const handlePromptChange = (promptId: string) => {
+    setSelectedPromptId(promptId);
+    const selectedPrompt = prompts.find(p => p.id.toString() === promptId);
+    if (selectedPrompt) {
+      updateContent('prompt', selectedPrompt.prompt);
+    }
+  };
+
+  // Add useEffect to fetch example outputs
+  useEffect(() => {
+    const fetchExampleOutputs = async () => {
+      try {
+        const outputsData = await getExampleOutputs(supabase);
+        setExampleOutputs(outputsData);
+        if (outputsData.length > 0) {
+          setSelectedOutputId(outputsData[0].id.toString());
+          // Update the sample section content with the first output
+          updateContent('sample', outputsData[0].output);
+        }
+      } catch (error) {
+        console.error('Error fetching example outputs:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load example outputs",
+          variant: "destructive",
+        });
+      }
+    };
+
+    fetchExampleOutputs();
+  }, [supabase]);
+
+  // Add handler for output selection
+  const handleOutputChange = (outputId: string) => {
+    setSelectedOutputId(outputId);
+    const selectedOutput = exampleOutputs.find(o => o.id.toString() === outputId);
+    if (selectedOutput) {
+      updateContent('sample', selectedOutput.output);
+    }
+  };
+
   return (
     <div className="w-full mx-auto">
       <Card>
@@ -489,12 +563,9 @@ ${expert.description || ''}`;
                   variant="ghost"
                   size="sm"
                   onClick={() => toggleSection('project')}
+                  title="Toggle section height"
                 >
-                  {sections[1].isExpanded ? (
-                    <ChevronUp className="h-4 w-4" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4" />
-                  )}
+                  <ArrowUpDown className="h-4 w-4" />
                 </Button>
               </div>
               <Popover 
@@ -546,12 +617,9 @@ ${expert.description || ''}`;
                   variant="ghost"
                   size="sm"
                   onClick={() => toggleSection('expert')}
+                  title="Toggle section height"
                 >
-                  {sections[2].isExpanded ? (
-                    <ChevronUp className="h-4 w-4" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4" />
-                  )}
+                  <ArrowUpDown className="h-4 w-4" />
                 </Button>
               </div>
               <Popover 
@@ -600,19 +668,33 @@ ${expert.description || ''}`;
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Prompt Section */}
             <div className="space-y-2">
-              <div className="flex justify-between items-center">
+              <div className="flex items-center justify-between gap-2">
                 <Label>Prompt</Label>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => toggleSection('prompt')}
-                >
-                  {sections[0].isExpanded ? (
-                    <ChevronUp className="h-4 w-4" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4" />
-                  )}
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Select
+                    value={selectedPromptId}
+                    onValueChange={handlePromptChange}
+                  >
+                    <SelectTrigger className="w-[200px]">
+                      <SelectValue placeholder="Select a prompt template" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {prompts.map((prompt) => (
+                        <SelectItem key={prompt.id} value={prompt.id.toString()}>
+                          {prompt.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => toggleSection('prompt')}
+                    title="Toggle section height"
+                  >
+                    <ArrowUpDown className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
               <Textarea
                 placeholder={sections[0].placeholder}
@@ -625,19 +707,33 @@ ${expert.description || ''}`;
 
             {/* Sample Output Section */}
             <div className="space-y-2">
-              <div className="flex justify-between items-center">
+              <div className="flex items-center justify-between gap-2">
                 <Label>Sample Output</Label>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => toggleSection('sample')}
-                >
-                  {sections[3].isExpanded ? (
-                    <ChevronUp className="h-4 w-4" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4" />
-                  )}
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Select
+                    value={selectedOutputId}
+                    onValueChange={handleOutputChange}
+                  >
+                    <SelectTrigger className="w-[200px]">
+                      <SelectValue placeholder="Select an example output" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {exampleOutputs.map((output) => (
+                        <SelectItem key={output.id} value={output.id.toString()}>
+                          {output.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => toggleSection('sample')}
+                    title="Toggle section height"
+                  >
+                    <ArrowUpDown className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
               <Textarea
                 placeholder={sections[3].placeholder}
@@ -657,12 +753,9 @@ ${expert.description || ''}`;
                 variant="ghost"
                 size="sm"
                 onClick={() => toggleSection('output')}
+                title="Toggle section height"
               >
-                {sections[4].isExpanded ? (
-                  <ChevronUp className="h-4 w-4" />
-                ) : (
-                  <ChevronDown className="h-4 w-4" />
-                )}
+                <ArrowUpDown className="h-4 w-4" />
               </Button>
             </div>
             <div className="relative">

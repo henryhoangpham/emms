@@ -5,6 +5,7 @@ import { User } from '@supabase/supabase-js';
 import { createClient } from '@/utils/supabase/client';
 import BaseKPIReport, { Column, ColumnGroup } from './BaseKPIReport';
 import { format } from 'date-fns';
+import { getKPITeamMembers, type KPIMemberData } from '@/utils/supabase/queries';
 
 interface MemberKPIReportProps {
   user: User;
@@ -17,12 +18,7 @@ const IV_MONTHLY_TARGET = 900;
 const REVENUE_MONTHLY_TARGET = 800000;
 const NET_REVENUE_MONTHLY_TARGET = 600000;
 
-interface MemberKPIData {
-  recruiter: string;
-  badge: boolean;
-  region: 'Global' | 'JP';
-  pm: string;
-  resource_allocation: number;
+interface MemberKPIData extends KPIMemberData {
   call_request_actual: number;
   call_request_actual_accum: number;
   call_request_achievement: number;
@@ -70,7 +66,7 @@ const columnSubgroups: { [key: string]: ColumnGroup[] } = {
 
 const columns: Column[] = [
   // Frozen columns
-  { key: 'recruiter', title: 'Recruiter', frozen: true, group: '', subgroup: '' },
+  { key: 'nick', title: 'Recruiter', frozen: true, group: '', subgroup: '' },
   { key: 'badge', title: 'Badge', frozen: true, group: '', subgroup: '' },
   { key: 'region', title: 'Region', frozen: true, group: '', subgroup: '' },
   { key: 'pm', title: 'PM', frozen: true, group: '', subgroup: '' },
@@ -103,43 +99,6 @@ const columns: Column[] = [
   { key: 'net_revenue_achievement', title: '%', group: 'Expert', subgroup: 'Net Revenue' }
 ];
 
-// Mock data based on the image
-const mockData: MemberKPIData[] = [
-  {
-    recruiter: 'Zoe',
-    badge: false,
-    region: 'Global',
-    pm: 'Zoe',
-    resource_allocation: 0,
-    call_request_actual: 10,
-    call_request_actual_accum: 50,
-    call_request_achievement: 45,
-    candidate_actual: 8,
-    candidate_actual_accum: 40,
-    candidate_achievement: 42,
-    candidate_from_db: 5,
-    expert_actual: 4,
-    expert_actual_accum: 20,
-    expert_achievement: 38,
-    revenue: 50000,
-    revenue_accum: 250000,
-    revenue_achievement: 35,
-    net_revenue: 35000,
-    net_revenue_accum: 175000,
-    net_revenue_achievement: 32
-  },
-  // Add more mock data for other recruiters from the image
-//   {
-//     recruiter: 'Sheila',
-//     badge: false,
-//     region: 'Global',
-//     pm: 'Zoe',
-//     resource_allocation: 1.0,
-//     // ... add rest of the data
-//   },
-  // ... add more recruiters
-];
-
 export default function MemberKPIReport({ user }: MemberKPIReportProps) {
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
@@ -147,16 +106,82 @@ export default function MemberKPIReport({ user }: MemberKPIReportProps) {
   const fetchData = useCallback(async (yyyymm: string): Promise<MemberKPIData[]> => {
     try {
       setLoading(true);
-      // In real implementation, fetch from API
-      // For now, return mock data
-      return mockData;
+      
+      // Fetch team members
+      const members = await getKPITeamMembers(supabase);
+      
+      // Group members by PM
+      const groupedMembers: { [key: string]: KPIMemberData[] } = {};
+      members.forEach(member => {
+        if (!groupedMembers[member.pm]) {
+          groupedMembers[member.pm] = [];
+        }
+        groupedMembers[member.pm].push(member);
+      });
+
+      // Create final data array with blank rows between PM groups
+      const result: MemberKPIData[] = [];
+      Object.entries(groupedMembers).forEach(([pm, pmMembers], index) => {
+        // Add blank row before each group (except first)
+        if (index > 0) {
+          // result.push({
+            // nick: '',
+            // badge: false,
+            // region: '',
+            // pm: '',
+            // resource_allocation: 0,
+            // call_request_actual: 0,
+            // call_request_actual_accum: 0,
+            // call_request_achievement: 0,
+            // candidate_actual: 0,
+            // candidate_actual_accum: 0,
+            // candidate_achievement: 0,
+            // candidate_from_db: 0,
+            // expert_actual: 0,
+            // expert_actual_accum: 0,
+            // expert_achievement: 0,
+            // revenue: 0,
+            // revenue_accum: 0,
+            // revenue_achievement: 0,
+            // net_revenue: 0,
+            // net_revenue_accum: 0,
+            // net_revenue_achievement: 0
+          // });
+        }
+
+        // Add members of this PM group
+        pmMembers.forEach(member => {
+          result.push({
+            ...member,
+            // Add mock data for now - in real implementation, fetch from API
+            call_request_actual: 0,
+            call_request_actual_accum: 0,
+            call_request_achievement: 0,
+            candidate_actual: 0,
+            candidate_actual_accum: 0,
+            candidate_achievement: 0,
+            candidate_from_db: 0,
+            expert_actual: 0,
+            expert_actual_accum: 0,
+            expert_achievement: 0,
+            revenue: 0,
+            revenue_accum: 0,
+            revenue_achievement: 0,
+            net_revenue: 0,
+            net_revenue_accum: 0,
+            net_revenue_achievement: 0
+          });
+        });
+      });
+
+      return result;
     } catch (error) {
       console.error('Error:', error);
       return [];
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [supabase]);
 
   const formatValue = useCallback((key: string, value: any) => {
     if (value === null) return '-';

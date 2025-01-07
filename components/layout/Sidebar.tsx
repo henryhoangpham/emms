@@ -188,7 +188,7 @@ export function Sidebar({ onClose, user }: SidebarProps) {
               </Button>
             </Link>
 
-            <Link href="/phone-recordings">
+            {/* <Link href="/phone-recordings">
               <Button 
                 variant={pathname === '/phone-recordings' ? "secondary" : "ghost"} 
                 className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
@@ -197,7 +197,7 @@ export function Sidebar({ onClose, user }: SidebarProps) {
                 <Video className="h-4 w-4" />
                 {isExpanded && <span className="ml-2">Phone Recordings</span>}
               </Button>
-            </Link>
+            </Link> */}
 
           </div>
 
