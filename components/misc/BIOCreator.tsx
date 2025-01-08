@@ -16,39 +16,6 @@ import { getPJTMasterData, getExpertsData, saveBIOHistory, getPrompts, type Prom
 import { createClient } from '@/utils/supabase/client';
 import { BIOHistoryDialog } from './BIOHistoryDialog';
 
-const DEFAULT_PROMPT = `Create a professional profile for the expert that will maximize their chances of project approval. The profile should:
-
-1. Content Guidelines:
-- Extract and emphasize experience relevant to project requirements
-- Showcase concrete achievements with measurable impacts
-- Highlight domain expertise and technical depth
-- Demonstrate regional/market knowledge
-- Focus on recent experience (past 1-2 years)
-
-2. Writing Style:
-- Use clear, confident language
-- Be specific rather than general
-- Focus on facts and achievements
-- Maintain professional tone
-- Avoid technical jargon unless specifically relevant
-
-3. Structure Requirements:
-- Begin with a powerful executive summary
-- Organize information in logical sections
-- Include relevant metrics and outcomes
-- Highlight project-specific qualifications
-- Keep total length to 300 words maximum
-
-4. Essential Elements:
-- Relevant technical/domain expertise
-- Recent project experience
-- Industry knowledge
-- Consulting track record
-- Geographic expertise
-- Language capabilities
-- Current availability
-`;
-
 interface Section {
   id: string;
   title: string;
@@ -88,42 +55,9 @@ const LANGUAGES: { value: Language; label: string }[] = [
   { value: 'TH', label: 'Thai' }
 ];
 
-const DEFAULT_SAMPLE_OUTPUT = `EXPERT CREDENTIALS
-
-Executive Summary:
-[2-3 impactful sentences highlighting core expertise and value proposition]
-
-Domain Expertise:
-- [Primary area of specialization]
-- [Key technical competencies]
-- [Relevant methodologies/frameworks]
-
-Recent Achievements:
-- [Key project outcome 1]
-- [Key project outcome 2]
-- [Key project outcome 3]
-
-Industry Experience:
-- [Sector expertise]
-- [Types of organizations served]
-- [Notable solutions delivered]
-
-Geographic Coverage:
-- [Regional experience]
-- [Market knowledge]
-- [Cultural understanding]
-
-Additional Information:
-- Languages: [List relevant languages]
-- Availability: [Current status]
-- Location: [Base location/time zone]
-
-Value Proposition:
-[1-2 sentences on unique qualifications and potential contribution]`;
-
 // Add user prop to component
 interface BIOCreatorProps {
-  user: any;
+  user: User;
 }
 
 export default function BIOCreator({ user }: BIOCreatorProps) {
@@ -139,11 +73,15 @@ export default function BIOCreator({ user }: BIOCreatorProps) {
   const [projectSearchOpen, setProjectSearchOpen] = useState(false);
   const [expertSearchOpen, setExpertSearchOpen] = useState(false);
 
+  // Add loading states
+  const [isLoadingPrompts, setIsLoadingPrompts] = useState(true);
+  const [isLoadingExamples, setIsLoadingExamples] = useState(true);
+
   const [sections, setSections] = useState<Section[]>([
     {
       id: 'prompt',
       title: 'Prompt',
-      content: DEFAULT_PROMPT,
+      content: '',
       isExpanded: false,
       placeholder: 'Enter your prompt here...'
     },
@@ -197,6 +135,9 @@ export default function BIOCreator({ user }: BIOCreatorProps) {
   // Add new state for example outputs
   const [exampleOutputs, setExampleOutputs] = useState<ExampleOutput[]>([]);
   const [selectedOutputId, setSelectedOutputId] = useState<string>('');
+
+  // Add initialization state
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const toggleSection = (id: string) => {
     setSections(sections.map(section => 
@@ -443,11 +384,6 @@ ${expert.description || ''}`;
     };
   }, []);
 
-  // Initialize sample output
-  useEffect(() => {
-    updateContent('sample', DEFAULT_SAMPLE_OUTPUT);
-  }, []);
-
   // Add handler
   const handleHistorySelect = (history: any) => {
     // Update each section with the history data
@@ -473,69 +409,90 @@ ${expert.description || ''}`;
     setSelectedLanguage(history.language as Language);
   };
 
-  // Add useEffect to fetch prompts
+  // Replace both fetch effects with a single initialization effect
   useEffect(() => {
-    const fetchPrompts = async () => {
+    const initializeData = async () => {
       try {
-        const promptsData = await getPrompts(supabase);
-        setPrompts(promptsData);
-        if (promptsData.length > 0) {
-          setSelectedPromptId(promptsData[0].id.toString());
-          // Update the prompt section content with the first prompt
-          updateContent('prompt', promptsData[0].prompt);
-        }
+        // Start loading states
+        setIsLoadingPrompts(true);
+        setIsLoadingExamples(true);
+
+        // Fetch both datasets in parallel
+        const [promptsData, outputsData] = await Promise.all([
+          getPrompts(supabase),
+          getExampleOutputs(supabase)
+        ]);
+
+        // Batch state updates using a single setSections call
+        setSections(prevSections => {
+          const updatedSections = [...prevSections];
+          
+          if (promptsData && promptsData.length > 0) {
+            setPrompts(promptsData);
+            setSelectedPromptId(promptsData[0].id.toString());
+            const promptSection = updatedSections.find(s => s.id === 'prompt');
+            if (promptSection) {
+              promptSection.content = promptsData[0].prompt;
+            }
+          }
+
+          if (outputsData && outputsData.length > 0) {
+            setExampleOutputs(outputsData);
+            setSelectedOutputId(outputsData[0].id.toString());
+            const sampleSection = updatedSections.find(s => s.id === 'sample');
+            if (sampleSection) {
+              sampleSection.content = outputsData[0].output;
+            }
+          }
+
+          return updatedSections;
+        });
+
       } catch (error) {
-        console.error('Error fetching prompts:', error);
+        console.error('Error initializing data:', error);
         toast({
           title: "Error",
-          description: "Failed to load prompts",
+          description: "Failed to load initial data",
           variant: "destructive",
         });
+      } finally {
+        setIsLoadingPrompts(false);
+        setIsLoadingExamples(false);
+        setIsInitialized(true);
       }
     };
 
-    fetchPrompts();
-  }, [supabase]);
+    if (!isInitialized) {
+      initializeData();
+    }
+  }, [supabase, isInitialized]);
 
-  // Add handler for prompt selection
+  // Update the handlers to use batched updates
   const handlePromptChange = (promptId: string) => {
-    setSelectedPromptId(promptId);
     const selectedPrompt = prompts.find(p => p.id.toString() === promptId);
     if (selectedPrompt) {
-      updateContent('prompt', selectedPrompt.prompt);
+      setSelectedPromptId(promptId);
+      setSections(prevSections => 
+        prevSections.map(section => 
+          section.id === 'prompt' 
+            ? { ...section, content: selectedPrompt.prompt }
+            : section
+        )
+      );
     }
   };
 
-  // Add useEffect to fetch example outputs
-  useEffect(() => {
-    const fetchExampleOutputs = async () => {
-      try {
-        const outputsData = await getExampleOutputs(supabase);
-        setExampleOutputs(outputsData);
-        if (outputsData.length > 0) {
-          setSelectedOutputId(outputsData[0].id.toString());
-          // Update the sample section content with the first output
-          updateContent('sample', outputsData[0].output);
-        }
-      } catch (error) {
-        console.error('Error fetching example outputs:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load example outputs",
-          variant: "destructive",
-        });
-      }
-    };
-
-    fetchExampleOutputs();
-  }, [supabase]);
-
-  // Add handler for output selection
   const handleOutputChange = (outputId: string) => {
-    setSelectedOutputId(outputId);
     const selectedOutput = exampleOutputs.find(o => o.id.toString() === outputId);
     if (selectedOutput) {
-      updateContent('sample', selectedOutput.output);
+      setSelectedOutputId(outputId);
+      setSections(prevSections => 
+        prevSections.map(section => 
+          section.id === 'sample' 
+            ? { ...section, content: selectedOutput.output }
+            : section
+        )
+      );
     }
   };
 
@@ -674,9 +631,14 @@ ${expert.description || ''}`;
                   <Select
                     value={selectedPromptId}
                     onValueChange={handlePromptChange}
+                    disabled={isLoadingPrompts}
                   >
                     <SelectTrigger className="w-[200px]">
-                      <SelectValue placeholder="Select a prompt template" />
+                      <SelectValue placeholder={
+                        isLoadingPrompts 
+                          ? "Loading..." 
+                          : "Select a prompt template"
+                      } />
                     </SelectTrigger>
                     <SelectContent>
                       {prompts.map((prompt) => (
@@ -713,9 +675,14 @@ ${expert.description || ''}`;
                   <Select
                     value={selectedOutputId}
                     onValueChange={handleOutputChange}
+                    disabled={isLoadingExamples}
                   >
                     <SelectTrigger className="w-[200px]">
-                      <SelectValue placeholder="Select an example output" />
+                      <SelectValue placeholder={
+                        isLoadingExamples 
+                          ? "Loading..." 
+                          : "Select an example output"
+                      } />
                     </SelectTrigger>
                     <SelectContent>
                       {exampleOutputs.map((output) => (
