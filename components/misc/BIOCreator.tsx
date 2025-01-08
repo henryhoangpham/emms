@@ -15,6 +15,7 @@ import { format } from 'date-fns';
 import { getPJTMasterData, getExpertsData, saveBIOHistory, getPrompts, type Prompt, getExampleOutputs, type ExampleOutput } from '@/utils/supabase/queries';
 import { createClient } from '@/utils/supabase/client';
 import { BIOHistoryDialog } from './BIOHistoryDialog';
+import { User } from '@supabase/supabase-js';
 
 interface Section {
   id: string;
@@ -196,7 +197,7 @@ ${sampleSection.content}` : ''}`;
 
       // Save to history using the new query function
       await saveBIOHistory(supabase, {
-        user_email: user.email,
+        user_email: user.email || '',
         llm_type: selectedLLM,
         language: selectedLanguage,
         prompt: promptSection.content,
@@ -790,7 +791,7 @@ ${expert.description || ''}`;
         open={historyOpen}
         onClose={() => setHistoryOpen(false)}
         onSelect={handleHistorySelect}
-        userEmail={user.email}
+        userEmail={user.email || ''}
       />
     </div>
   );

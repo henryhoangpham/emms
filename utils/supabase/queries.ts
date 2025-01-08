@@ -1,5 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { format } from 'date-fns';
+import { DEFAULT_ITEMS_PER_PAGE } from '../constants';
 
 export const getUser = async (supabase: SupabaseClient) => {
   const {
@@ -1336,46 +1337,36 @@ export interface PhoneRecordingFilters {
 }
 
 export async function getZoomPhoneRecordings(
-  nextPageToken: string = '',
-  pageSize: number = 30,
+  pageToken: string = '',
+  pageSize: number = DEFAULT_ITEMS_PER_PAGE,
   filters?: PhoneRecordingFilters
-): Promise<ZoomPhoneRecordingsResponse> {
-  // Build query parameters
-  const params = new URLSearchParams({
-    next_page_token: nextPageToken,
-    page_size: pageSize.toString()
-  });
-
-  // Add filters to query parameters with correct date format
-  if (filters) {
-    if (filters.dateFrom) {
-      // Format: yyyy-MM-dd'T'HH:mm:ss'Z'
-      params.append('from', format(filters.dateFrom, "yyyy-MM-dd'T'HH:mm:ss'Z'"));
+) {
+  try {
+    let url = `/api/zoom/phone-recordings?page_size=${pageSize}`;
+    
+    if (pageToken) {
+      url += `&next_page_token=${encodeURIComponent(pageToken)}`;
     }
-    if (filters.dateTo) {
-      params.append('to', format(filters.dateTo, "yyyy-MM-dd'T'HH:mm:ss'Z'"));
+
+    // Add date filters if they exist
+    if (filters?.dateFrom) {
+      url += `&from=${encodeURIComponent(filters.dateFrom.toISOString())}`;
     }
+    
+    if (filters?.dateTo) {
+      url += `&to=${encodeURIComponent(filters.dateTo.toISOString())}`;
+    }
+
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error('Failed to fetch phone recordings');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching phone recordings:', error);
+    throw error;
   }
-
-  const response = await fetch(
-    `/api/zoom/phone-recordings?${params.toString()}`,
-    { method: 'GET' }
-  );
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.error || 'Failed to fetch phone recordings');
-  }
-
-  const data = await response.json();
-  
-  // Add access token to each recording
-  data.phone_recordings = data.phone_recordings.map((recording: PhoneRecording) => ({
-    ...recording,
-    access_token: data.access_token
-  }));
-
-  return data;
 }
 
 export interface KPIMemberData {

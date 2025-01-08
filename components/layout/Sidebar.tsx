@@ -17,6 +17,10 @@ const shouldShowOnlyBioCreator = (user: User | null) => {
   return user?.email === 'bio-creator@arches-global.com';
 };
 
+const shouldShowOnlyZoomRecordings = (user: User | null) => {
+  return user?.email === 'zoom@arches-global.com';
+};
+
 export function Sidebar({ onClose, user }: SidebarProps) {
   const pathname = usePathname();
   const [isExpanded, setIsExpanded] = useState(true);
@@ -26,7 +30,7 @@ export function Sidebar({ onClose, user }: SidebarProps) {
   };
 
   const isBioCreator = shouldShowOnlyBioCreator(user);
-
+  const isZoomRecordings = shouldShowOnlyZoomRecordings(user);
   return (
     <aside className={`bg-card shadow-md flex flex-col h-full transition-all duration-300 ${
       isExpanded ? 'w-64' : 'w-20'
@@ -63,7 +67,7 @@ export function Sidebar({ onClose, user }: SidebarProps) {
 
         {/* Navigation */}
         <nav className="space-y-2">
-          {!isBioCreator && (
+          {!isBioCreator && !isZoomRecordings && (
             <>
               <Link href="/pjt">
                 <Button 
@@ -170,38 +174,42 @@ export function Sidebar({ onClose, user }: SidebarProps) {
           )}
 
           {/* Tools Section - Always visible */}
-          <div className={`${!isBioCreator ? 'pt-2 border-t' : ''}`}>
+          <div className={`${!isBioCreator && !isZoomRecordings ? 'pt-2 border-t' : ''}`}>
             {isExpanded && (
               <div className="text-sm text-muted-foreground px-2 py-1">
                 Tools
               </div>
             )}
             
-            <Link href="/bio-creator">
-              <Button 
-                variant={pathname === '/bio-creator' ? "secondary" : "ghost"} 
-                className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
-                title="BIO Creator"
+            {isBioCreator && (
+              <Link href="/bio-creator">
+                <Button 
+                  variant={pathname === '/bio-creator' ? "secondary" : "ghost"} 
+                  className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
+                  title="BIO Creator"
               >
                 <FileText className="h-4 w-4" />
-                {isExpanded && <span className="ml-2">BIO Creator</span>}
-              </Button>
-            </Link>
+                  {isExpanded && <span className="ml-2">BIO Creator</span>}
+                </Button>
+              </Link>
+            )}
 
-            {/* <Link href="/phone-recordings">
-              <Button 
-                variant={pathname === '/phone-recordings' ? "secondary" : "ghost"} 
-                className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
-                title="Phone Recordings"
+            {isZoomRecordings && (
+              <Link href="/phone-recordings">
+                <Button 
+                  variant={pathname === '/phone-recordings' ? "secondary" : "ghost"} 
+                  className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
+                  title="Phone Recordings"
               >
                 <Video className="h-4 w-4" />
-                {isExpanded && <span className="ml-2">Phone Recordings</span>}
-              </Button>
-            </Link> */}
+                  {isExpanded && <span className="ml-2">Phone Recordings</span>}
+                </Button>
+              </Link>
+            )}
 
           </div>
 
-          {!isBioCreator && (
+          {!isBioCreator && !isZoomRecordings && (
             <>
               {/* Invoice Section */}
               <div className="pt-2 border-t">

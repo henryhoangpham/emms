@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { format } from 'date-fns';
 import { DEFAULT_ITEMS_PER_PAGE, ITEMS_PER_PAGE_OPTIONS } from '@/utils/constants';
 import { Button } from '@/components/ui/button';
-import { Download, Loader2 } from 'lucide-react';
+import { Download, Loader2, X } from 'lucide-react';
 import { TableWrapper } from '@/components/ui/table-wrapper';
 import { getZoomPhoneRecordings, PhoneRecording, PhoneRecordingFilters } from '@/utils/supabase/queries';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -18,6 +18,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/utils/cn";
 import { addDays, startOfDay, endOfDay } from "date-fns";
+import { Label } from "@/components/ui/label";
 
 interface ZoomPhoneRecordingListProps {
   user: User;
@@ -40,25 +41,35 @@ export default function ZoomPhoneRecordingsList({ user }: ZoomPhoneRecordingList
   const fetchRecordings = useCallback(async () => {
     try {
       setLoading(true);
-      const pageToken = pageTokens[currentPage - 1] || '';
       
-      const filters: PhoneRecordingFilters = {
-        dateFrom: dateFrom,
-        dateTo: dateTo
-      };
+      // Create filters object with only defined dates
+      const filters: PhoneRecordingFilters = {};
+      
+      if (dateFrom) {
+        filters.dateFrom = startOfDay(dateFrom);
+      }
+      
+      if (dateTo) {
+        filters.dateTo = endOfDay(dateTo);
+      }
 
-      const data = await getZoomPhoneRecordings(pageToken, itemsPerPage, filters);
+      const response = await getZoomPhoneRecordings(
+        pageTokens[currentPage - 1],
+        itemsPerPage,
+        Object.keys(filters).length > 0 ? filters : undefined
+      );
+
       console.log('filters', filters);
-      console.log('recordings data', data);
+      console.log('recordings data', response);
       
-      setPhoneRecordings(data.phone_recordings);
-      setTotalItems(data.total_records);
-      setNextPageToken(data.next_page_token);
+      setPhoneRecordings(response.phone_recordings);
+      setTotalItems(response.total_records);
+      setNextPageToken(response.next_page_token);
 
-      if (data.next_page_token && !pageTokens[currentPage]) {
+      if (response.next_page_token && !pageTokens[currentPage]) {
         setPageTokens(prev => {
           const next = [...prev];
-          next[currentPage] = data.next_page_token;
+          next[currentPage] = response.next_page_token;
           return next;
         });
       }
@@ -74,7 +85,7 @@ export default function ZoomPhoneRecordingsList({ user }: ZoomPhoneRecordingList
     } finally {
       setLoading(false);
     }
-  }, [currentPage, itemsPerPage, pageTokens, toast, dateFrom, dateTo]);
+  }, [currentPage, itemsPerPage, dateFrom, dateTo, pageTokens]);
 
   useEffect(() => {
     fetchRecordings();
@@ -198,6 +209,14 @@ export default function ZoomPhoneRecordingsList({ user }: ZoomPhoneRecordingList
     setDateTo(undefined);
   };
 
+  const handleClearDateFrom = () => {
+    setDateFrom(undefined);
+  };
+
+  const handleClearDateTo = () => {
+    setDateTo(undefined);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-32">
@@ -207,95 +226,130 @@ export default function ZoomPhoneRecordingsList({ user }: ZoomPhoneRecordingList
   }
 
   const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const allSelected = phoneRecordings.length > 0 && phoneRecordings.every(r => selectedRecordings.has(r.id));
+  const allSelected = (phoneRecordings?.length ?? 0) > 0 && 
+    phoneRecordings?.every(r => selectedRecordings.has(r.id));
   const someSelected = selectedRecordings.size > 0;
 
   return (
     <div className="w-full">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader>
           <CardTitle>Phone Recordings</CardTitle>
-          {someSelected && (
-            <Button
-              variant="default"
-              size="sm"
-              className="flex items-center gap-2"
-              onClick={handleBulkDownload}
-              disabled={downloadingRecordings.size > 0}
-            >
-              {downloadingRecordings.size > 0 ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Download className="h-4 w-4" />
-              )}
-              Download Selected ({selectedRecordings.size})
-            </Button>
-          )}
         </CardHeader>
         <CardContent>
-          <div className="mb-6 grid gap-4 md:grid-cols-2">
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium">From Date</label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "justify-start text-left font-normal",
-                      !dateFrom && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dateFrom ? format(dateFrom, "PPP") : "Pick a date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={dateFrom}
-                    onSelect={setDateFrom}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
+          {/* Filters Section */}
+          <div className="mb-6">
+            <div className="flex items-end gap-4 max-w-[800px]">
+              {/* From Date */}
+              <div className="flex-1">
+                <Label className="mb-2 block">From</Label>
+                <div className="relative">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-full justify-start text-left font-normal pr-12",
+                          !dateFrom && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {dateFrom ? format(dateFrom, "PPP") : <span>Pick a date</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={dateFrom}
+                        onSelect={setDateFrom}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  {dateFrom && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 p-0"
+                      onClick={handleClearDateFrom}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {/* To Date */}
+              <div className="flex-1">
+                <Label className="mb-2 block">To</Label>
+                <div className="relative">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-full justify-start text-left font-normal pr-12",
+                          !dateTo && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {dateTo ? format(dateTo, "PPP") : <span>Pick a date</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={dateTo}
+                        onSelect={setDateTo}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  {dateTo && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 p-0"
+                      onClick={handleClearDateTo}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {/* Reset Button */}
+              <Button
+                variant="outline"
+                onClick={resetFilters}
+                size="sm"
+              >
+                Reset Filters
+              </Button>
             </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium">To Date</label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "justify-start text-left font-normal",
-                      !dateTo && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dateTo ? format(dateTo, "PPP") : "Pick a date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={dateTo}
-                    onSelect={setDateTo}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
+
+            {/* Bulk Download Button */}
+            {someSelected && (
+              <div className="mt-4">
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="flex items-center gap-2"
+                  onClick={handleBulkDownload}
+                  disabled={downloadingRecordings.size > 0}
+                >
+                  {downloadingRecordings.size > 0 ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Download className="h-4 w-4" />
+                  )}
+                  Download Selected ({selectedRecordings.size})
+                </Button>
+              </div>
+            )}
           </div>
 
-          <div className="mb-4 flex justify-end">
-            <Button
-              variant="outline"
-              onClick={resetFilters}
-              size="sm"
-            >
-              Reset Filters
-            </Button>
-          </div>
-
+          {/* Table Section */}
           <TableWrapper>
             <table className="w-full">
               <thead>
@@ -326,7 +380,7 @@ export default function ZoomPhoneRecordingsList({ user }: ZoomPhoneRecordingList
                       </div>
                     </td>
                   </tr>
-                ) : phoneRecordings.length === 0 ? (
+                ) : !phoneRecordings || phoneRecordings.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="text-center py-8 text-muted-foreground">
                       No phone recordings found
