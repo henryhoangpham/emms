@@ -31,6 +31,7 @@ export function Sidebar({ onClose, user }: SidebarProps) {
 
   const isBioCreator = shouldShowOnlyBioCreator(user);
   const isZoomRecordings = shouldShowOnlyZoomRecordings(user);
+
   return (
     <aside className={`bg-card shadow-md flex flex-col h-full transition-all duration-300 ${
       isExpanded ? 'w-64' : 'w-20'
@@ -67,8 +68,10 @@ export function Sidebar({ onClose, user }: SidebarProps) {
 
         {/* Navigation */}
         <nav className="space-y-2">
+          {/* Show all navigation items if user is not restricted */}
           {!isBioCreator && !isZoomRecordings && (
             <>
+              {/* Main Navigation */}
               <Link href="/pjt">
                 <Button 
                   variant={pathname.startsWith('/pjt') ? "secondary" : "ghost"} 
@@ -173,42 +176,44 @@ export function Sidebar({ onClose, user }: SidebarProps) {
             </>
           )}
 
-          {/* Tools Section - Always visible */}
+          {/* Tools Section */}
           <div className={`${!isBioCreator && !isZoomRecordings ? 'pt-2 border-t' : ''}`}>
-            {isExpanded && (
+            {isExpanded && !isBioCreator && !isZoomRecordings && (
               <div className="text-sm text-muted-foreground px-2 py-1">
                 Tools
               </div>
             )}
             
-            {isBioCreator && (
+            {/* Show BIO Creator if user is bio creator or has full access */}
+            {(isBioCreator || (!isBioCreator && !isZoomRecordings)) && (
               <Link href="/bio-creator">
                 <Button 
                   variant={pathname === '/bio-creator' ? "secondary" : "ghost"} 
                   className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
                   title="BIO Creator"
-              >
-                <FileText className="h-4 w-4" />
+                >
+                  <FileText className="h-4 w-4" />
                   {isExpanded && <span className="ml-2">BIO Creator</span>}
                 </Button>
               </Link>
             )}
 
-            {isZoomRecordings && (
+            {/* Show Phone Recordings if user is zoom recordings user or has full access */}
+            {(isZoomRecordings || (!isBioCreator && !isZoomRecordings)) && (
               <Link href="/phone-recordings">
                 <Button 
                   variant={pathname === '/phone-recordings' ? "secondary" : "ghost"} 
                   className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
                   title="Phone Recordings"
-              >
-                <Video className="h-4 w-4" />
+                >
+                  <Video className="h-4 w-4" />
                   {isExpanded && <span className="ml-2">Phone Recordings</span>}
                 </Button>
               </Link>
             )}
-
           </div>
 
+          {/* Show additional sections only for full access users */}
           {!isBioCreator && !isZoomRecordings && (
             <>
               {/* Invoice Section */}
