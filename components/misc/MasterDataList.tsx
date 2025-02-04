@@ -19,6 +19,12 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/utils/cn";
 import { TableWrapper } from '@/components/ui/table-wrapper';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const RECORD_TYPES = [
   'Candidate',
@@ -462,7 +468,20 @@ export default function MasterDataList({ user }: MasterDataListProps) {
                     </td>
                     <td className="p-2 max-w-md break-words">{item.recruiter || '-'}</td>
                     <td className="p-2 max-w-md break-words">{item.name || '-'}</td>
-                    <td className="p-2 whitespace-nowrap">{item.position || '-'}</td>
+                    <td className="p-2 max-w-[200px]">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="line-clamp-2 break-words cursor-default">
+                              {item.position || '-'}
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-[300px] break-words">
+                            <p>{item.position || '-'}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </td>
                   </tr>
                 ))}
               </tbody>

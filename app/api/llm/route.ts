@@ -18,9 +18,9 @@ export async function POST(req: Request) {
     switch (provider) {
       case 'openai':
         const completion = await openai.chat.completions.create({
-          model: 'gpt-4o',
-          temperature: 0.7,
-          max_tokens: 10000,
+          model: 'o3-mini',
+          // temperature: 0.7,
+          // max_tokens: 10000,
           messages: [
             {
               role: 'system',
