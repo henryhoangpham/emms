@@ -12,7 +12,7 @@ export default function EditAllocation() {
   const params = useParams();
   const router = useRouter();
   const { toast } = useToast();
-  const allocationId = params.id as string;
+  const allocationId = params?.id as string;
 
   useEffect(() => {
     if (!loading && !user) {

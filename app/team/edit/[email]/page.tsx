@@ -14,7 +14,7 @@ export default function EditTeamMember() {
   const params = useParams();
   const router = useRouter();
   const { toast } = useToast();
-  const email = decodeURIComponent(params.email as string);
+  const email = decodeURIComponent(params?.email as string);
   const [member, setMember] = useState<TeamMember | null>(null);
 
 

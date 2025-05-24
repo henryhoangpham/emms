@@ -12,7 +12,7 @@ export default function EditDepartment() {
   const params = useParams();
   const router = useRouter();
   const { toast } = useToast();
-  const departmentId = params.id as string;
+  const departmentId = params?.id as string;
 
   useEffect(() => {
     if (!loading && !user) {

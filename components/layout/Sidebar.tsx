@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from "@/components/ui/button";
-import { Users, Briefcase, X, ChevronLeft, ChevronRight, Calendar, FolderTree, BookOpen, Database, BarChart, LineChart, UserCheck, Wrench, FileText, Video } from "lucide-react";
+import { Users, Briefcase, X, ChevronLeft, ChevronRight, Calendar, FolderTree, BookOpen, Database, BarChart, LineChart, UserCheck, Wrench, FileText, Video, MessageSquare } from "lucide-react";
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Logo } from './Logo';
@@ -73,8 +73,8 @@ export function Sidebar({ onClose, user }: SidebarProps) {
             <>
               {/* Main Navigation */}
               <Link href="/pjt">
-                <Button 
-                  variant={pathname.startsWith('/pjt') ? "secondary" : "ghost"} 
+                <Button
+                  variant={pathname?.startsWith('/pjt') ? "secondary" : "ghost"}
                   className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
                   title="PJT Data"
                 >
@@ -83,8 +83,8 @@ export function Sidebar({ onClose, user }: SidebarProps) {
                 </Button>
               </Link>
               <Link href="/master">
-                <Button 
-                  variant={pathname.startsWith('/master') ? "secondary" : "ghost"} 
+                <Button
+                  variant={pathname?.startsWith('/master') ? "secondary" : "ghost"}
                   className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
                   title="Master Data 2024"
                 >
@@ -93,8 +93,8 @@ export function Sidebar({ onClose, user }: SidebarProps) {
                 </Button>
               </Link>
               <Link href="/experts">
-                <Button 
-                  variant={pathname.startsWith('/experts') ? "secondary" : "ghost"} 
+                <Button
+                  variant={pathname?.startsWith('/experts') ? "secondary" : "ghost"}
                   className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
                   title="Experts Data"
                 >
@@ -103,8 +103,8 @@ export function Sidebar({ onClose, user }: SidebarProps) {
                 </Button>
               </Link>
               <Link href="/operational-clients">
-                <Button 
-                  variant={pathname.startsWith('/operational-clients') ? "secondary" : "ghost"} 
+                <Button
+                  variant={pathname?.startsWith('/operational-clients') ? "secondary" : "ghost"}
                   className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
                   title="Operational Clients"
                 >
@@ -113,8 +113,8 @@ export function Sidebar({ onClose, user }: SidebarProps) {
                 </Button>
               </Link>
               <Link href="/client-stats">
-                <Button 
-                  variant={pathname.startsWith('/client-stats') ? "secondary" : "ghost"} 
+                <Button
+                  variant={pathname?.startsWith('/client-stats') ? "secondary" : "ghost"}
                   className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
                   title="Client Stats"
                 >
@@ -128,10 +128,10 @@ export function Sidebar({ onClose, user }: SidebarProps) {
                 <div className="text-sm text-muted-foreground px-2 py-1">
                   {isExpanded && "KPI Reports"}
                 </div>
-                
+
                 <Link href="/kpi/company">
-                  <Button 
-                    variant={pathname === '/kpi/company' ? "secondary" : "ghost"} 
+                  <Button
+                    variant={pathname === '/kpi/company' ? "secondary" : "ghost"}
                     className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
                     title="Company KPI"
                   >
@@ -141,8 +141,8 @@ export function Sidebar({ onClose, user }: SidebarProps) {
                 </Link>
 
                 <Link href="/kpi/member">
-                  <Button 
-                    variant={pathname === '/kpi/member' ? "secondary" : "ghost"} 
+                  <Button
+                    variant={pathname === '/kpi/member' ? "secondary" : "ghost"}
                     className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
                     title="Member KPI"
                   >
@@ -152,8 +152,8 @@ export function Sidebar({ onClose, user }: SidebarProps) {
                 </Link>
 
                 <Link href="/kpi/rec-mngt">
-                  <Button 
-                    variant={pathname === '/kpi/rec-mngt' ? "secondary" : "ghost"} 
+                  <Button
+                    variant={pathname === '/kpi/rec-mngt' ? "secondary" : "ghost"}
                     className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
                     title="Rec Mngt KPI"
                   >
@@ -163,8 +163,8 @@ export function Sidebar({ onClose, user }: SidebarProps) {
                 </Link>
 
                 <Link href="/kpi/account">
-                  <Button 
-                    variant={pathname === '/kpi/account' ? "secondary" : "ghost"} 
+                  <Button
+                    variant={pathname === '/kpi/account' ? "secondary" : "ghost"}
                     className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
                     title="Account KPI"
                   >
@@ -183,12 +183,12 @@ export function Sidebar({ onClose, user }: SidebarProps) {
                 Tools
               </div>
             )}
-            
+
             {/* Show BIO Creator if user is bio creator or has full access */}
             {(isBioCreator || (!isBioCreator && !isZoomRecordings)) && (
               <Link href="/bio-creator">
-                <Button 
-                  variant={pathname === '/bio-creator' ? "secondary" : "ghost"} 
+                <Button
+                  variant={pathname === '/bio-creator' ? "secondary" : "ghost"}
                   className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
                   title="BIO Creator"
                 >
@@ -201,13 +201,27 @@ export function Sidebar({ onClose, user }: SidebarProps) {
             {/* Show Phone Recordings if user is zoom recordings user or has full access */}
             {(isZoomRecordings || (!isBioCreator && !isZoomRecordings)) && (
               <Link href="/phone-recordings">
-                <Button 
-                  variant={pathname === '/phone-recordings' ? "secondary" : "ghost"} 
+                <Button
+                  variant={pathname === '/phone-recordings' ? "secondary" : "ghost"}
                   className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
                   title="Phone Recordings"
                 >
                   <Video className="h-4 w-4" />
                   {isExpanded && <span className="ml-2">Phone Recordings</span>}
+                </Button>
+              </Link>
+            )}
+
+            {/* Show Chat with DB for all users */}
+            {(!isBioCreator && !isZoomRecordings) && (
+              <Link href="/chat-with-db">
+                <Button
+                  variant={pathname === '/chat-with-db' ? "secondary" : "ghost"}
+                  className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
+                  title="Chat with Database"
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  {isExpanded && <span className="ml-2">Chat with DB</span>}
                 </Button>
               </Link>
             )}
@@ -221,10 +235,10 @@ export function Sidebar({ onClose, user }: SidebarProps) {
                 <div className="text-sm text-muted-foreground px-2 py-1">
                   {isExpanded && "Invoice"}
                 </div>
-                
+
                 <Link href="/invoice/monthly">
-                  <Button 
-                    variant={pathname === '/invoice/monthly' ? "secondary" : "ghost"} 
+                  <Button
+                    variant={pathname === '/invoice/monthly' ? "secondary" : "ghost"}
                     className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
                     title="Monthly Invoice"
                   >
@@ -234,8 +248,8 @@ export function Sidebar({ onClose, user }: SidebarProps) {
                 </Link>
 
                 <Link href="/invoice/payg">
-                  <Button 
-                    variant={pathname === '/invoice/payg' ? "secondary" : "ghost"} 
+                  <Button
+                    variant={pathname === '/invoice/payg' ? "secondary" : "ghost"}
                     className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
                     title="PayG Invoice"
                   >
@@ -250,10 +264,10 @@ export function Sidebar({ onClose, user }: SidebarProps) {
                 <div className="text-sm text-muted-foreground px-2 py-1">
                   {isExpanded && "Settings"}
                 </div>
-                
+
                 <Link href="/settings/kpi">
-                  <Button 
-                    variant={pathname === '/settings/kpi' ? "secondary" : "ghost"} 
+                  <Button
+                    variant={pathname === '/settings/kpi' ? "secondary" : "ghost"}
                     className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
                     title="KPI Settings"
                   >
@@ -263,8 +277,8 @@ export function Sidebar({ onClose, user }: SidebarProps) {
                 </Link>
 
                 <Link href="/team">
-                  <Button 
-                    variant={pathname === '/teams' ? "secondary" : "ghost"} 
+                  <Button
+                    variant={pathname === '/teams' ? "secondary" : "ghost"}
                     className={`w-full justify-start ${!isExpanded && 'justify-center'}`}
                     title="Team Settings"
                   >

@@ -12,7 +12,7 @@ export default function EditEmployee() {
   const params = useParams();
   const router = useRouter();
   const { toast } = useToast();
-  const employeeId = params.id as string;
+  const employeeId = params?.id as string;
 
   useEffect(() => {
     if (!loading && !user) {
