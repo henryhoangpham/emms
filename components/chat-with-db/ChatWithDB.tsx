@@ -9,6 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Spinner } from '@/components/ui/spinner';
 import { Code } from '@/components/ui/code';
+import Chart from './Chart';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -25,6 +26,7 @@ interface Message {
   content: string;
   sql?: string;
   results?: ResultsData | null;
+  chart?: any | null;
   status?: 'thinking' | 'generating_sql' | 'executing_sql' | 'generating_explanation' | 'complete';
 }
 
@@ -32,6 +34,7 @@ interface StreamData {
   status?: string;
   sql?: string;
   results?: ResultsData;
+  chart?: any;
   explanation_chunk?: string;
   explanation?: string;
   complete?: boolean;
@@ -92,9 +95,60 @@ const ChatWithDB: React.FC = () => {
         eventSourceRef.current.close();
       }
 
-      // Create new event source for streaming
+      // Create new event source for streaming (use ask-with-chart endpoint for chart support)
       console.log(`Connecting to ${API_URL}/api/chat/ask/stream?question=${encodeURIComponent(input)}&db_type=bigquery`);
-      const eventSource = new EventSource(
+
+      // Try to use the ask-with-chart endpoint first, fallback to regular stream
+      const useChartEndpoint = true; // Enable chart support
+
+      let eventSource: EventSource;
+
+      if (useChartEndpoint) {
+        // Use POST request for ask-with-chart endpoint
+        try {
+          const response = await fetch(`${API_URL}/api/chat/ask-with-chart`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              question: input,
+              db_type: 'bigquery'
+            })
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+
+            // Update the AI message with the complete response
+            setMessages((prevMessages) => {
+              const updatedMessages = [...prevMessages];
+              const aiMessageIndex = updatedMessages.findIndex((msg) => msg.id === aiMessageId);
+
+              if (aiMessageIndex !== -1) {
+                updatedMessages[aiMessageIndex] = {
+                  ...updatedMessages[aiMessageIndex],
+                  content: data.explanation || 'Query completed successfully',
+                  sql: data.sql,
+                  results: data.results,
+                  chart: data.chart,
+                  status: 'complete'
+                };
+              }
+
+              return updatedMessages;
+            });
+
+            setIsLoading(false);
+            return;
+          }
+        } catch (error) {
+          console.log('Chart endpoint failed, falling back to streaming:', error);
+        }
+      }
+
+      // Fallback to streaming endpoint
+      eventSource = new EventSource(
         `${API_URL}/api/chat/ask/stream?question=${encodeURIComponent(input)}&db_type=bigquery`
       );
       eventSourceRef.current = eventSource;
@@ -127,6 +181,11 @@ const ChatWithDB: React.FC = () => {
                 updatedAiMessage.results = data.results;
               }
 
+              if (data.chart) {
+                console.log('Chart received:', data.chart);
+                updatedAiMessage.chart = data.chart;
+              }
+
               if (data.explanation_chunk) {
                 console.log('Explanation chunk received');
                 updatedAiMessage.content += data.explanation_chunk;
@@ -138,6 +197,7 @@ const ChatWithDB: React.FC = () => {
                 updatedAiMessage.content = data.explanation || updatedAiMessage.content;
                 updatedAiMessage.sql = data.sql || updatedAiMessage.sql;
                 updatedAiMessage.results = data.results || updatedAiMessage.results;
+                updatedAiMessage.chart = data.chart || updatedAiMessage.chart;
                 eventSource.close();
               }
 
@@ -288,6 +348,18 @@ const ChatWithDB: React.FC = () => {
                           <div className="w-full">
                             <p className="mb-1 font-bold">Results:</p>
                             {renderResults(message.results)}
+                          </div>
+                        )}
+
+                        {message.chart && (
+                          <div className="w-full">
+                            <p className="mb-1 font-bold">Visualization:</p>
+                            <Chart
+                              data={message.chart}
+                              title="Query Results Chart"
+                              height={350}
+                              className="mt-2"
+                            />
                           </div>
                         )}
 
